@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>DevToolkit — Options</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .card p {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .card a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    .card a:hover { text-decoration: underline; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: 'Cascadia Code', monospace;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      padding: 9px 18px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #4f46e5; transform: translateY(-1px); }
+
+    button.secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    button.secondary:hover { background: #475569; }
+
+    #save-status {
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 80px;
+    }
+
+    #save-status.ok   { color: #4ade80; }
+    #save-status.fail { color: #f87171; }
+
+    .hint {
+      background: #0f172a;
+      border-left: 3px solid #6366f1;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .hint strong { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <span style="font-size:26px">⚙️</span>
+      <h1>DevToolkit — Options</h1>
+    </header>
+
+    <div class="card">
+      <h2>🤖 Clé API Gemini (IA Résumé)</h2>
+      <p>
+        La fonctionnalité de résumé utilise <strong>Gemini 2.0 Flash Lite</strong> de Google,
+        disponible gratuitement.<br>
+        Obtenez votre clé sur
+        <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio →</a>
+      </p>
+
+      <div class="hint">
+        <strong>Gratuit :</strong> 15 requêtes/minute, 1 000 000 tokens/jour — largement suffisant pour un usage personnel.
+      </div>
+
+      <div class="field">
+        <label for="api-key">Clé API (commence par <code>AIza…</code>)</label>
+        <div class="row">
+          <input type="password" id="api-key" placeholder="AIzaSy…" autocomplete="off">
+          <button id="btn-toggle-key" class="secondary" type="button">Afficher</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btn-save" type="button">💾 Sauvegarder</button>
+        <button id="btn-clear" class="secondary" type="button">🗑 Effacer</button>
+        <span id="save-status"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ℹ️ À propos</h2>
+      <p>
+        <strong>DevToolkit v1.0.0</strong><br>
+        Résumé IA · Formatter JSON · Base64 / URL · App ID Steam
+      </p>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

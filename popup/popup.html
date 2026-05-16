@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>DevToolkit</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="logo">⚙️</span>
+      <h1>DevToolkit</h1>
+      <button id="btn-options" class="icon-btn" title="Options">⚙</button>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="ai">🤖 IA Résumé</button>
+      <button class="tab-btn" data-tab="code">🛠 Code</button>
+      <button class="tab-btn" data-tab="game">🎮 App ID</button>
+    </nav>
+
+    <!-- IA Résumé -->
+    <div class="tab-content active" id="tab-ai">
+      <div id="api-warning" class="api-warning hidden">
+        ⚠️ Clé API Gemini manquante.
+        <a id="link-options" href="#">Configurer dans les options →</a>
+      </div>
+      <div class="btn-group">
+        <button id="btn-summarize-selection" class="btn primary">
+          📋 Résumer la sélection
+        </button>
+        <button id="btn-summarize-page" class="btn secondary">
+          📄 Résumer la page
+        </button>
+      </div>
+      <div id="ai-status" class="status-msg hidden"></div>
+      <textarea id="ai-result" placeholder="Le résumé apparaîtra ici..." readonly></textarea>
+      <button id="btn-copy-summary" class="btn secondary small hidden">📋 Copier le résumé</button>
+    </div>
+
+    <!-- Outils Code -->
+    <div class="tab-content" id="tab-code">
+      <div class="tool-section">
+        <div class="tool-header">JSON Formatter</div>
+        <textarea id="json-input" placeholder='{"clé": "valeur"}'></textarea>
+        <div class="btn-row">
+          <button id="btn-format-json" class="btn primary small">Formater</button>
+          <button id="btn-minify-json" class="btn secondary small">Minifier</button>
+          <button id="btn-copy-json" class="btn secondary small">Copier</button>
+          <button id="btn-clear-json" class="btn danger small">Effacer</button>
+        </div>
+        <div id="json-error" class="error-msg hidden"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">Base64</div>
+        <input id="b64-input" type="text" placeholder="Texte à encoder / Base64 à décoder…">
+        <div class="btn-row">
+          <button id="btn-b64-encode" class="btn primary small">Encoder</button>
+          <button id="btn-b64-decode" class="btn secondary small">Décoder</button>
+          <button id="btn-copy-b64" class="btn secondary small">Copier</button>
+        </div>
+        <input id="b64-output" type="text" readonly placeholder="Résultat…">
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">URL Encoder</div>
+        <input id="url-input" type="text" placeholder="Texte ou URL encodée…">
+        <div class="btn-row">
+          <button id="btn-url-encode" class="btn primary small">Encoder</button>
+          <button id="btn-url-decode" class="btn secondary small">Décoder</button>
+          <button id="btn-copy-url" class="btn secondary small">Copier</button>
+        </div>
+        <input id="url-output" type="text" readonly placeholder="Résultat…">
+      </div>
+    </div>
+
+    <!-- App ID Jeu -->
+    <div class="tab-content" id="tab-game">
+      <div class="search-bar">
+        <input id="game-search" type="text" placeholder="Nom du jeu Steam…">
+        <button id="btn-search-game" class="btn primary">Chercher</button>
+      </div>
+      <div id="game-status" class="status-msg hidden"></div>
+      <div id="game-results"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
