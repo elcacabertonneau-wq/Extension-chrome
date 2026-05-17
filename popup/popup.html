@@ -19,6 +19,7 @@
       <button class="tab-btn" data-tab="game">🎮 Jeux</button>
       <button class="tab-btn" data-tab="sites">🔖 Sites</button>
       <button class="tab-btn" data-tab="style">🎨 Style</button>
+      <button class="tab-btn" data-tab="dev">🖥 Dev</button>
     </nav>
 
     <!-- ── IA : Chat ───────────────────────────────────────────── -->
@@ -169,6 +170,59 @@
         </div>
         <input id="url-output" type="text" readonly placeholder="Résultat…">
       </div>
+
+      <div class="tool-section">
+        <div class="tool-header">📱 QR Code</div>
+        <input id="qr-input" type="text" placeholder="URL ou texte à encoder…">
+        <div class="btn-row">
+          <button id="btn-gen-qr" class="btn primary small">Générer</button>
+          <button id="btn-download-qr" class="btn secondary small hidden">⬇ Télécharger</button>
+        </div>
+        <div id="qr-output" class="qr-output"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🔓 JWT Decoder</div>
+        <textarea id="jwt-input" rows="2" placeholder="eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiZGV2In0.xxx"></textarea>
+        <div class="btn-row">
+          <button id="btn-decode-jwt" class="btn primary small">Décoder</button>
+          <button id="btn-clear-jwt" class="btn danger small">Effacer</button>
+        </div>
+        <div id="jwt-output" class="jwt-output hidden"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🔍 Regex Tester</div>
+        <div class="regex-row">
+          <span class="regex-slash">/</span>
+          <input id="regex-pattern" type="text" placeholder="pattern…" class="regex-pattern-input">
+          <span class="regex-slash">/</span>
+          <input id="regex-flags" type="text" placeholder="gi" class="regex-flags-input" value="g">
+        </div>
+        <textarea id="regex-text" rows="3" placeholder="Texte de test…"></textarea>
+        <div id="regex-count" class="regex-count"></div>
+        <div id="regex-output" class="regex-output"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🔢 Convertisseur de base</div>
+        <div class="base-input-row">
+          <input id="base-input" type="text" placeholder="Valeur…">
+          <select id="base-from" class="base-select">
+            <option value="10">DEC</option>
+            <option value="16">HEX</option>
+            <option value="2">BIN</option>
+            <option value="8">OCT</option>
+          </select>
+          <button id="btn-convert-base" class="btn primary small">→</button>
+        </div>
+        <div class="base-outputs">
+          <div class="base-out-row"><span>DEC</span><input id="base-dec" type="text" readonly><button class="btn secondary tiny" data-copy="base-dec">⎘</button></div>
+          <div class="base-out-row"><span>HEX</span><input id="base-hex" type="text" readonly><button class="btn secondary tiny" data-copy="base-hex">⎘</button></div>
+          <div class="base-out-row"><span>BIN</span><input id="base-bin" type="text" readonly><button class="btn secondary tiny" data-copy="base-bin">⎘</button></div>
+          <div class="base-out-row"><span>OCT</span><input id="base-oct" type="text" readonly><button class="btn secondary tiny" data-copy="base-oct">⎘</button></div>
+        </div>
+      </div>
     </div>
 
     <!-- ── Jeux ────────────────────────────────────────────────── -->
@@ -203,6 +257,33 @@
       </div>
       <div id="game-status" class="status-msg hidden"></div>
       <div id="game-results"></div>
+
+      <div class="tool-section">
+        <div class="tool-header">💰 Prix Steam en direct</div>
+        <div class="search-bar">
+          <input id="steam-price-input" type="text" placeholder="Nom du jeu…">
+          <button id="btn-check-price" class="btn primary small">Prix</button>
+        </div>
+        <div id="steam-price-result"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🟣 Twitch Live</div>
+        <div class="btn-row">
+          <input id="twitch-input" type="text" placeholder="Pseudo Twitch…">
+          <button id="btn-check-twitch" class="btn primary small">Vérifier</button>
+        </div>
+        <div id="twitch-result" class="status-msg hidden"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🎭 Générateur de pseudo</div>
+        <div class="btn-row">
+          <button id="btn-gen-pseudo" class="btn primary small">🎲 Générer x5</button>
+          <button id="btn-copy-pseudo" class="btn secondary small">Copier le 1er</button>
+        </div>
+        <div id="pseudo-results" class="pseudo-results"></div>
+      </div>
     </div>
 
     <!-- ── Sites ───────────────────────────────────────────────── -->
@@ -314,6 +395,33 @@
       </div>
       <textarea id="notes-area" placeholder="Notez ici un code promo, une IP de serveur, des coordonnées de map…"></textarea>
       <div id="notes-saved" class="notes-saved-indicator"></div>
+    </div>
+
+    <!-- ── Dev : HTML Preview ─────────────────────────────────────── -->
+    <div class="tab-content" id="tab-dev">
+
+      <div class="tool-section">
+        <div class="tool-header">🖥 Prévisualiser du HTML local</div>
+        <div class="preview-drop-zone" id="preview-drop-zone">
+          <input type="file" id="html-file-input" accept=".html,.htm" style="display:none">
+          <button id="btn-select-html" class="btn secondary small">📂 Charger un fichier HTML</button>
+          <span id="preview-filename" class="preview-filename">ou colle ton HTML ci-dessous</span>
+        </div>
+        <textarea id="html-preview-input" class="html-preview-textarea" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;&#10;  &lt;body&gt;Hello world !&lt;/body&gt;&#10;&lt;/html&gt;"></textarea>
+        <div class="btn-row">
+          <button id="btn-preview-html" class="btn primary small">▶ Ouvrir dans un onglet</button>
+          <button id="btn-preview-clear" class="btn danger small">Effacer</button>
+        </div>
+        <div id="preview-status" class="status-msg hidden"></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">ℹ️ Comment ça marche</div>
+        <div class="preview-info">
+          <p>Charge ton <code>index.html</code> ou colle ton HTML directement. Le fichier s'ouvre dans un vrai onglet du navigateur — parfait pour tester du HTML/CSS/JS sans serveur.</p>
+          <p class="muted-text">Les ressources relatives (images, scripts externes) doivent être en ligne ou en data URI pour fonctionner.</p>
+        </div>
+      </div>
     </div>
   </div>
 

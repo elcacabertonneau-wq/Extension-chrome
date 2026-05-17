@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DevToolkit",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Résumé IA · Outils dev · Jeux Steam · Notes & Timer",
   "permissions": ["activeTab", "storage", "scripting", "contextMenus", "alarms", "notifications"],
   "host_permissions": [
@@ -11,7 +11,9 @@
     "https://status.playstation.com/*",
     "https://xnotify.xboxlive.com/*",
     "https://text.pollinations.ai/*",
-    "https://www.google.com/*"
+    "https://www.google.com/*",
+    "https://api.qrserver.com/*",
+    "https://decapi.me/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",

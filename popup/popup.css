@@ -354,3 +354,68 @@ textarea { min-height: 100px; }
 .api-warning { background: #451a03; border: 1px solid #92400e; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #fcd34d; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .api-warning a { color: var(--warn); text-decoration: underline; }
 .api-warning.hidden { display: none; }
+
+/* ── QR Code ── */
+.qr-output { display: flex; justify-content: center; margin-top: 8px; }
+.qr-img { border-radius: 8px; border: 3px solid var(--border); background: #fff; padding: 4px; max-width: 190px; }
+
+/* ── JWT ── */
+.jwt-output { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.jwt-section { background: var(--surface2); border-radius: 6px; padding: 8px 10px; }
+.jwt-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.jwt-pre { font-family: monospace; font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-all; max-height: 100px; overflow-y: auto; }
+.jwt-sig { font-family: monospace; font-size: 10px; color: var(--muted); word-break: break-all; }
+.jwt-exp.valid { color: var(--success); }
+.jwt-exp.expired { color: var(--error); }
+
+/* ── Regex ── */
+.regex-row { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.regex-slash { color: var(--accent); font-family: monospace; font-size: 16px; font-weight: bold; }
+.regex-pattern-input { flex: 1; }
+.regex-flags-input { width: 44px; text-align: center; font-family: monospace; }
+.regex-count { font-size: 12px; margin: 4px 0; min-height: 16px; }
+.regex-output { background: var(--surface2); border-radius: 6px; padding: 8px; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 100px; overflow-y: auto; }
+.regex-match { background: rgba(251,191,36,0.35); color: #fbbf24; border-radius: 2px; padding: 0 1px; }
+
+/* ── Base Converter ── */
+.base-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.base-input-row input { flex: 1; }
+.base-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 6px 8px; font-size: 12px; }
+.base-outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.base-out-row { display: flex; align-items: center; gap: 4px; }
+.base-out-row span { font-size: 11px; font-weight: 600; color: var(--muted); width: 28px; }
+.base-out-row input { flex: 1; font-family: monospace; font-size: 12px; }
+.btn.tiny { padding: 3px 6px; font-size: 11px; }
+
+/* ── Steam Price ── */
+.steam-price-card { background: var(--surface2); border-radius: 8px; padding: 10px 12px; margin-top: 6px; }
+.steam-game-name { font-weight: 600; margin-bottom: 4px; }
+.steam-price { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.price-normal { font-size: 16px; font-weight: 700; color: var(--text); }
+.price-original { font-size: 12px; color: var(--muted); text-decoration: line-through; }
+.price-discounted { font-size: 16px; font-weight: 700; color: var(--success); }
+.price-badge { background: var(--success); color: #000; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+.price-free { color: var(--success); font-weight: 600; }
+.steam-link { font-size: 12px; color: var(--accent); text-decoration: none; cursor: pointer; }
+.steam-link:hover { text-decoration: underline; }
+
+/* ── Twitch ── */
+.twitch-link { color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+/* ── Pseudo Generator ── */
+.pseudo-results { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.pseudo-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border-radius: 6px; padding: 6px 10px; }
+.pseudo-name { font-family: monospace; font-size: 13px; font-weight: 600; color: var(--accent); }
+
+/* ── HTML Preview Tab ── */
+.preview-drop-zone {
+  border: 2px dashed var(--border); border-radius: 8px; padding: 14px 12px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  transition: border-color var(--anim); margin-bottom: 8px;
+}
+.preview-drop-zone.drag-over { border-color: var(--accent); background: rgba(99,102,241,0.06); }
+.preview-filename { font-size: 12px; color: var(--muted); }
+.html-preview-textarea { width: 100%; min-height: 130px; font-family: monospace; font-size: 12px; resize: vertical; }
+.preview-info { font-size: 12px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 6px; }
+.preview-info code { background: var(--surface2); padding: 1px 5px; border-radius: 3px; color: var(--accent); font-family: monospace; }
+.muted-text { color: var(--muted); font-size: 11px; }

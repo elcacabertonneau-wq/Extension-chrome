@@ -1030,4 +1030,314 @@ async function init() {
   await initAI();
 }
 
+// ── QR Code Generator ────────────────────────────────────────────────────────
+
+document.getElementById('btn-gen-qr').addEventListener('click', generateQR);
+document.getElementById('qr-input').addEventListener('keydown', e => { if (e.key === 'Enter') generateQR(); });
+
+function generateQR() {
+  const text = document.getElementById('qr-input').value.trim();
+  if (!text) return;
+  const size = 180;
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
+  const out = document.getElementById('qr-output');
+  out.innerHTML = `<img src="${esc(url)}" alt="QR Code" class="qr-img" crossorigin="anonymous">`;
+  const dlBtn = document.getElementById('btn-download-qr');
+  dlBtn.classList.remove('hidden');
+  dlBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'qrcode.png';
+    a.click();
+  };
+}
+
+// ── JWT Decoder ───────────────────────────────────────────────────────────────
+
+document.getElementById('btn-decode-jwt').addEventListener('click', decodeJWT);
+document.getElementById('btn-clear-jwt').addEventListener('click', () => {
+  document.getElementById('jwt-input').value = '';
+  document.getElementById('jwt-output').classList.add('hidden');
+  document.getElementById('jwt-output').innerHTML = '';
+});
+
+function decodeJWT() {
+  const token = document.getElementById('jwt-input').value.trim();
+  const out = document.getElementById('jwt-output');
+  out.classList.remove('hidden');
+
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Token invalide — 3 parties attendues');
+
+    function decodeB64(str) {
+      const padded = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = (4 - padded.length % 4) % 4;
+      return JSON.parse(atob(padded + '='.repeat(pad)));
+    }
+
+    const header  = decodeB64(parts[0]);
+    const payload = decodeB64(parts[1]);
+
+    const exp = payload.exp ? new Date(payload.exp * 1000) : null;
+    const now = new Date();
+    const expired = exp && exp < now;
+    const expLabel = exp
+      ? `<span class="jwt-exp ${expired ? 'expired' : 'valid'}">${expired ? '❌ Expiré' : '✅ Valide'} — ${exp.toLocaleString('fr-FR')}</span>`
+      : '';
+
+    out.innerHTML = `
+      <div class="jwt-section">
+        <div class="jwt-label">Header</div>
+        <pre class="jwt-pre">${esc(JSON.stringify(header, null, 2))}</pre>
+      </div>
+      <div class="jwt-section">
+        <div class="jwt-label">Payload ${expLabel}</div>
+        <pre class="jwt-pre">${esc(JSON.stringify(payload, null, 2))}</pre>
+      </div>
+      <div class="jwt-section">
+        <div class="jwt-label">Signature</div>
+        <div class="jwt-sig">${esc(parts[2])}</div>
+      </div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Regex Tester ─────────────────────────────────────────────────────────────
+
+let regexTimer = null;
+document.getElementById('regex-pattern').addEventListener('input', debouncedRegex);
+document.getElementById('regex-flags').addEventListener('input', debouncedRegex);
+document.getElementById('regex-text').addEventListener('input', debouncedRegex);
+
+function debouncedRegex() {
+  clearTimeout(regexTimer);
+  regexTimer = setTimeout(runRegex, 300);
+}
+
+function runRegex() {
+  const pattern = document.getElementById('regex-pattern').value;
+  const flags   = document.getElementById('regex-flags').value.replace(/[^gimsuy]/g, '');
+  const text    = document.getElementById('regex-text').value;
+  const countEl = document.getElementById('regex-count');
+  const outEl   = document.getElementById('regex-output');
+
+  if (!pattern || !text) { outEl.innerHTML = ''; countEl.textContent = ''; return; }
+
+  try {
+    const globalFlags = flags.includes('g') ? flags : flags + 'g';
+    const re = new RegExp(pattern, globalFlags);
+    const matches = [...text.matchAll(re)];
+    countEl.textContent = `${matches.length} correspondance${matches.length !== 1 ? 's' : ''}`;
+    countEl.style.color = matches.length > 0 ? 'var(--success)' : 'var(--muted)';
+
+    // Build highlighted output without re-escaping the pattern
+    let out = '';
+    let lastIdx = 0;
+    for (const m of matches) {
+      out += esc(text.slice(lastIdx, m.index));
+      out += `<mark class="regex-match">${esc(m[0])}</mark>`;
+      lastIdx = m.index + m[0].length;
+    }
+    out += esc(text.slice(lastIdx));
+    outEl.innerHTML = out;
+  } catch (e) {
+    countEl.textContent = `❌ ${e.message}`;
+    countEl.style.color = 'var(--error)';
+    outEl.innerHTML = '';
+  }
+}
+
+// ── Base Converter ────────────────────────────────────────────────────────────
+
+document.getElementById('btn-convert-base').addEventListener('click', convertBase);
+document.getElementById('base-input').addEventListener('keydown', e => { if (e.key === 'Enter') convertBase(); });
+
+document.querySelectorAll('[data-copy]').forEach(btn => {
+  btn.addEventListener('click', function () { copyText(document.getElementById(this.dataset.copy).value, this); });
+});
+
+function convertBase() {
+  const raw      = document.getElementById('base-input').value.trim();
+  const fromBase = parseInt(document.getElementById('base-from').value);
+  if (!raw) return;
+
+  const dec = parseInt(raw, fromBase);
+  if (isNaN(dec)) {
+    ['base-dec','base-hex','base-bin','base-oct'].forEach(id => { document.getElementById(id).value = '❌ Invalide'; });
+    return;
+  }
+
+  document.getElementById('base-dec').value = dec;
+  document.getElementById('base-hex').value = dec.toString(16).toUpperCase();
+  document.getElementById('base-bin').value = dec.toString(2);
+  document.getElementById('base-oct').value = dec.toString(8);
+}
+
+// ── Steam Price Checker ───────────────────────────────────────────────────────
+
+document.getElementById('btn-check-price').addEventListener('click', checkSteamPrice);
+document.getElementById('steam-price-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkSteamPrice(); });
+
+async function checkSteamPrice() {
+  const query = document.getElementById('steam-price-input').value.trim();
+  const out   = document.getElementById('steam-price-result');
+  if (!query) return;
+
+  out.innerHTML = '<div class="server-loading">Recherche…</div>';
+
+  try {
+    const searchRes = await fetch(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(query)}&cc=FR&l=fr`);
+    const searchData = await searchRes.json();
+    const items = (searchData.items || []).filter(i => i.type === 'game' || i.type === 'app').slice(0, 5);
+    if (!items.length) { out.innerHTML = '<div class="error-msg">Aucun jeu trouvé.</div>'; return; }
+
+    const priceRes = await fetch(`https://store.steampowered.com/api/appdetails?appids=${items[0].id}&cc=FR&filters=price_overview,basic`);
+    const priceData = await priceRes.json();
+    const details   = priceData[items[0].id]?.data;
+    const price     = details?.price_overview;
+
+    let priceHtml = '';
+    if (!price) {
+      priceHtml = '<span class="price-free">Gratuit / Non disponible</span>';
+    } else if (price.discount_percent > 0) {
+      priceHtml = `<span class="price-original">${price.initial_formatted}</span> <span class="price-discounted">${price.final_formatted}</span> <span class="price-badge">-${price.discount_percent}%</span>`;
+    } else {
+      priceHtml = `<span class="price-normal">${price.final_formatted}</span>`;
+    }
+
+    out.innerHTML = `<div class="steam-price-card">
+      <div class="steam-game-name">${esc(items[0].name)}</div>
+      <div class="steam-price">${priceHtml}</div>
+      <a class="steam-link" href="https://store.steampowered.com/app/${items[0].id}" target="_blank">Voir sur Steam →</a>
+    </div>`;
+
+    out.querySelector('.steam-link')?.addEventListener('click', e => {
+      e.preventDefault();
+      chrome.tabs.create({ url: `https://store.steampowered.com/app/${items[0].id}` });
+    });
+
+  } catch (err) {
+    out.innerHTML = `<div class="error-msg">❌ ${esc(err.message)}</div>`;
+  }
+}
+
+// ── Twitch Live Checker ───────────────────────────────────────────────────────
+
+document.getElementById('btn-check-twitch').addEventListener('click', checkTwitch);
+document.getElementById('twitch-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkTwitch(); });
+
+async function checkTwitch() {
+  const username = document.getElementById('twitch-input').value.trim().toLowerCase();
+  const out = document.getElementById('twitch-result');
+  if (!username) return;
+
+  out.className = 'status-msg info';
+  out.textContent = '⏳ Vérification…';
+
+  try {
+    const res = await fetch(`https://decapi.me/twitch/uptime/${encodeURIComponent(username)}`);
+    const text = (await res.text()).trim();
+
+    if (text.toLowerCase().includes('offline') || text.toLowerCase().includes('error') || text.toLowerCase().includes('invalid')) {
+      out.className = 'status-msg error';
+      out.innerHTML = `🔴 <strong>${esc(username)}</strong> est hors ligne`;
+    } else {
+      out.className = 'status-msg success';
+      out.innerHTML = `🟢 <strong>${esc(username)}</strong> est en direct ! (${esc(text)}) — <a class="twitch-link" href="#">Regarder</a>`;
+      out.querySelector('.twitch-link').addEventListener('click', e => {
+        e.preventDefault();
+        chrome.tabs.create({ url: `https://twitch.tv/${encodeURIComponent(username)}` });
+      });
+    }
+  } catch (err) {
+    out.className = 'status-msg error';
+    out.textContent = `❌ ${err.message}`;
+  }
+}
+
+// ── Pseudo Generator ─────────────────────────────────────────────────────────
+
+const PSEUDO_ADJ  = ['Shadow','Dark','Neon','Cyber','Ghost','Void','Storm','Blaze','Iron','Wild','Frost','Toxic','Ultra','Hyper','Apex','Stealth','Silent','Rapid','Savage','Rogue','Lunar','Stellar','Omega','Alpha','Zero'];
+const PSEUDO_NOUN = ['Wolf','Raven','Drake','Hunter','Blade','Knight','Phantom','Reaper','Titan','Viper','Fox','Eagle','Bear','Lion','Hawk','Specter','Wraith','Cobra','Lynx','Panda','Nova','Pulse','Shift','Arc','Nexus'];
+
+function genOnePseudo() {
+  const adj  = PSEUDO_ADJ[Math.floor(Math.random() * PSEUDO_ADJ.length)];
+  const noun = PSEUDO_NOUN[Math.floor(Math.random() * PSEUDO_NOUN.length)];
+  const num  = Math.random() > 0.4 ? String(Math.floor(Math.random() * 9999)).padStart(2, '0') : '';
+  return `${adj}${noun}${num}`;
+}
+
+document.getElementById('btn-gen-pseudo').addEventListener('click', () => {
+  const results = Array.from({ length: 5 }, genOnePseudo);
+  const container = document.getElementById('pseudo-results');
+  container.innerHTML = results.map((p, i) =>
+    `<div class="pseudo-item" data-name="${esc(p)}">
+      <span class="pseudo-name">${esc(p)}</span>
+      <button class="btn secondary tiny pseudo-copy-btn">⎘</button>
+    </div>`
+  ).join('');
+  container.querySelectorAll('.pseudo-copy-btn').forEach((btn, i) => {
+    btn.addEventListener('click', function () { copyText(results[i], this); });
+  });
+});
+
+document.getElementById('btn-copy-pseudo').addEventListener('click', function () {
+  const first = document.querySelector('.pseudo-name');
+  if (first) copyText(first.textContent, this);
+});
+
+// ── HTML Preview ─────────────────────────────────────────────────────────────
+
+document.getElementById('btn-select-html').addEventListener('click', () => {
+  document.getElementById('html-file-input').click();
+});
+
+document.getElementById('html-file-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('html-preview-input').value = e.target.result;
+    document.getElementById('preview-filename').textContent = `📄 ${file.name}`;
+  };
+  reader.readAsText(file, 'UTF-8');
+});
+
+// Drag & drop support
+const dropZone = document.getElementById('preview-drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('html-preview-input').value = ev.target.result;
+    document.getElementById('preview-filename').textContent = `📄 ${file.name}`;
+  };
+  reader.readAsText(file, 'UTF-8');
+});
+
+document.getElementById('btn-preview-html').addEventListener('click', openHTMLPreview);
+document.getElementById('btn-preview-clear').addEventListener('click', () => {
+  document.getElementById('html-preview-input').value = '';
+  document.getElementById('preview-filename').textContent = 'ou colle ton HTML ci-dessous';
+  hideStatus('preview-status');
+});
+
+function openHTMLPreview() {
+  const html = document.getElementById('html-preview-input').value.trim();
+  if (!html) {
+    setStatus('preview-status', '❌ Aucun HTML à prévisualiser.', 'error');
+    return;
+  }
+  chrome.storage.local.set({ 'devtoolkit-preview-html': html }, () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('preview/preview.html') });
+  });
+}
+
 init();

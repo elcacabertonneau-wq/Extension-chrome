@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>DevToolkit — HTML Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    #toolbar {
+      display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+      background: #1e293b; color: #e2e8f0; font: 13px/1 system-ui, sans-serif;
+      border-bottom: 1px solid #334155; position: relative; z-index: 10;
+    }
+    #toolbar .logo { font-size: 15px; }
+    #toolbar .title { font-weight: 600; color: #818cf8; }
+    #toolbar .sep { flex: 1; }
+    #toolbar button {
+      padding: 4px 10px; border-radius: 5px; border: none; cursor: pointer;
+      font: inherit; font-size: 12px;
+    }
+    #btn-reload { background: #6366f1; color: #fff; }
+    #btn-reload:hover { background: #4f46e5; }
+    #btn-open-editor { background: #243047; color: #94a3b8; }
+    #btn-open-editor:hover { color: #e2e8f0; }
+    #frame {
+      width: 100%; border: none;
+      height: calc(100vh - 37px);
+    }
+    #empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: calc(100vh - 37px); color: #64748b; font: 15px system-ui, sans-serif; gap: 12px;
+    }
+    #empty .icon { font-size: 48px; }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <span class="logo">⚙️</span>
+    <span class="title">DevToolkit Preview</span>
+    <span class="sep"></span>
+    <button id="btn-reload">🔄 Recharger</button>
+    <button id="btn-open-editor">✏️ Modifier</button>
+  </div>
+  <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
+  <div id="empty" style="display:none">
+    <span class="icon">🖥️</span>
+    <span>Aucun HTML chargé. Ouvre DevToolkit et utilise l'onglet <strong>Dev</strong>.</span>
+  </div>
+
+  <script>
+    const frame = document.getElementById('frame');
+    const empty = document.getElementById('empty');
+
+    function loadPreview() {
+      chrome.storage.local.get(['devtoolkit-preview-html'], ({ 'devtoolkit-preview-html': html }) => {
+        if (!html) { frame.style.display = 'none'; empty.style.display = 'flex'; return; }
+        frame.style.display = 'block'; empty.style.display = 'none';
+        frame.srcdoc = html;
+      });
+    }
+
+    document.getElementById('btn-reload').addEventListener('click', loadPreview);
+    document.getElementById('btn-open-editor').addEventListener('click', () => {
+      chrome.action.openPopup?.().catch(() => {});
+    });
+
+    loadPreview();
+  </script>
+</body>
+</html>
