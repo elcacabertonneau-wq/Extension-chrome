@@ -17,21 +17,49 @@
       <button class="tab-btn active" data-tab="ai">🤖 IA</button>
       <button class="tab-btn" data-tab="code">🛠 Code</button>
       <button class="tab-btn" data-tab="game">🎮 Jeux</button>
-      <button class="tab-btn" data-tab="notes">📝 Notes</button>
+      <button class="tab-btn" data-tab="sites">🔖 Sites</button>
+      <button class="tab-btn" data-tab="style">🎨 Style</button>
     </nav>
 
-    <!-- IA Résumé -->
+    <!-- ── IA : Chat ───────────────────────────────────────────── -->
     <div class="tab-content active" id="tab-ai">
-      <div class="btn-group">
-        <button id="btn-summarize-selection" class="btn primary">📋 Résumer la sélection</button>
-        <button id="btn-summarize-page" class="btn secondary">📄 Résumer la page</button>
+      <div class="ai-header">
+        <select id="ai-mode">
+          <option value="chat">💬 Chat libre</option>
+          <option value="resume">📄 Résumé</option>
+          <option value="correction">✍️ Correction</option>
+          <option value="traduction">🌐 Traduction</option>
+          <option value="expliquer">🎓 Expliquer</option>
+        </select>
+        <select id="ai-model">
+          <option value="openai">⚡ OpenAI</option>
+          <option value="mistral">🌪 Mistral</option>
+          <option value="llama">🦙 Llama</option>
+        </select>
       </div>
-      <div id="ai-status" class="status-msg hidden"></div>
-      <textarea id="ai-result" placeholder="Le résumé apparaîtra ici..." readonly></textarea>
-      <button id="btn-copy-summary" class="btn secondary small hidden">📋 Copier le résumé</button>
+
+      <div id="chat-messages" class="chat-messages">
+        <div class="chat-msg assistant">
+          <span class="chat-avatar">🤖</span>
+          <div class="chat-bubble">Bonjour ! Je suis DevIA, ton assistant intégré. Pose-moi une question, colle du texte, ou utilise les boutons ci-dessous pour analyser la page courante.</div>
+        </div>
+      </div>
+
+      <div class="chat-actions">
+        <button id="btn-insert-page" class="btn secondary small">📄 Page</button>
+        <button id="btn-insert-selection" class="btn secondary small">📋 Sélection</button>
+        <button id="btn-clear-chat" class="btn danger small">🗑</button>
+      </div>
+
+      <div class="chat-input-area">
+        <textarea id="chat-input" rows="2" placeholder="Message…"></textarea>
+        <button id="btn-send-chat" class="btn primary">▶</button>
+      </div>
+
+      <div id="ai-engine-badge" class="ai-engine-badge"></div>
     </div>
 
-    <!-- Outils Code -->
+    <!-- ── Outils Code ─────────────────────────────────────────── -->
     <div class="tab-content" id="tab-code">
 
       <div class="tool-section">
@@ -52,7 +80,7 @@
           <label class="pw-opt"><input type="checkbox" id="pw-digits" checked> 0-9</label>
           <label class="pw-opt"><input type="checkbox" id="pw-symbols"> !@#</label>
           <input id="pw-length" type="number" value="16" min="4" max="64" class="pw-len-input">
-          <span style="font-size:12px;color:#64748b">car.</span>
+          <span style="font-size:12px;color:var(--muted)">car.</span>
         </div>
         <div class="btn-row">
           <button id="btn-gen-pw" class="btn primary small">Générer</button>
@@ -143,10 +171,9 @@
       </div>
     </div>
 
-    <!-- Jeux -->
+    <!-- ── Jeux ────────────────────────────────────────────────── -->
     <div class="tab-content" id="tab-game">
 
-      <!-- Dés -->
       <div class="tool-section">
         <div class="tool-header">🎲 Lanceur de dés</div>
         <div class="dice-btns">
@@ -162,7 +189,6 @@
         <div id="dice-history" class="dice-history"></div>
       </div>
 
-      <!-- Statut serveurs -->
       <div class="tool-section">
         <div class="tool-header-row">
           <span class="tool-header">🟢 Statut serveurs</span>
@@ -171,7 +197,6 @@
         <div id="server-list"><div class="server-loading">Chargement…</div></div>
       </div>
 
-      <!-- App ID -->
       <div class="search-bar">
         <input id="game-search" type="text" placeholder="Nom du jeu Steam…">
         <button id="btn-search-game" class="btn primary">Chercher</button>
@@ -180,10 +205,77 @@
       <div id="game-results"></div>
     </div>
 
-    <!-- Notes + Timer + Chrono -->
-    <div class="tab-content" id="tab-notes">
+    <!-- ── Sites ───────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-sites">
+      <button id="btn-capture-page" class="btn primary">📌 Ajouter la page courante</button>
 
-      <!-- Timer -->
+      <div class="search-bar">
+        <input id="sites-search" type="text" placeholder="Rechercher…">
+      </div>
+
+      <div id="sites-list"></div>
+
+      <div id="site-form" class="site-form hidden">
+        <input id="site-url" type="url" placeholder="https://…">
+        <input id="site-title" type="text" placeholder="Titre du site">
+        <input id="site-desc" type="text" placeholder="Description (optionnelle)">
+        <input id="site-tags" type="text" placeholder="Tags : dev, gaming, outil…">
+        <div class="color-labels">
+          <button class="color-dot active" data-color="none" title="Aucune"></button>
+          <button class="color-dot" data-color="red" title="Rouge"></button>
+          <button class="color-dot" data-color="orange" title="Orange"></button>
+          <button class="color-dot" data-color="yellow" title="Jaune"></button>
+          <button class="color-dot" data-color="green" title="Vert"></button>
+          <button class="color-dot" data-color="blue" title="Bleu"></button>
+          <button class="color-dot" data-color="purple" title="Violet"></button>
+          <button class="color-dot" data-color="pink" title="Rose"></button>
+        </div>
+        <div class="btn-row">
+          <button id="btn-site-save" class="btn primary small">Sauvegarder</button>
+          <button id="btn-site-cancel" class="btn secondary small">Annuler</button>
+        </div>
+      </div>
+
+      <button id="btn-show-add-form" class="btn secondary small">＋ Ajouter manuellement</button>
+    </div>
+
+    <!-- ── Style ───────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-style">
+
+      <div class="tool-section">
+        <div class="tool-header">🎨 Thème</div>
+        <div class="themes-grid">
+          <button class="theme-btn" data-theme="dark">🌑 Sombre</button>
+          <button class="theme-btn" data-theme="oled">⬛ OLED</button>
+          <button class="theme-btn" data-theme="gaming">🎮 Gaming</button>
+          <button class="theme-btn" data-theme="purple">💜 Violet</button>
+          <button class="theme-btn" data-theme="opera">🔴 Opera GX</button>
+          <button class="theme-btn" data-theme="light">☀️ Clair</button>
+        </div>
+
+        <div class="style-row">
+          <label>Accent</label>
+          <input id="custom-accent" type="color" value="#6366f1">
+        </div>
+        <div class="style-row">
+          <label>Police</label>
+          <input id="font-size-range" type="range" min="12" max="18" value="14" step="1">
+          <span id="font-size-val">14px</span>
+        </div>
+        <div class="style-row">
+          <label>Largeur popup</label>
+          <input id="popup-width-range" type="range" min="380" max="520" value="420" step="10">
+          <span id="popup-width-val">420px</span>
+        </div>
+        <div class="style-row">
+          <label>Animations</label>
+          <label class="toggle">
+            <input id="toggle-anim" type="checkbox" checked>
+            <span class="toggle-knob"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="tool-section">
         <div class="tool-header">⏱ Timer</div>
         <div class="timer-inputs">
@@ -202,7 +294,6 @@
         <div id="timer-status" class="status-msg hidden"></div>
       </div>
 
-      <!-- Chrono -->
       <div class="tool-section">
         <div class="tool-header">⏲ Chronomètre</div>
         <div id="chrono-display" class="timer-display mono">00:00.00</div>
@@ -214,7 +305,6 @@
         <div id="chrono-laps" class="chrono-laps"></div>
       </div>
 
-      <!-- Notes -->
       <div class="notes-toolbar">
         <span class="tool-header">📝 Notes</span>
         <div class="btn-row">

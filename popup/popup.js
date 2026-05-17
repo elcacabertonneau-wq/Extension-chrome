@@ -1,6 +1,6 @@
 'use strict';
 
-// ── Tab navigation ─────────────────────────────────────────────────────────
+// ── Tab navigation ──────────────────────────────────────────────────────────
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -13,14 +13,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 document.getElementById('btn-options').addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function setStatus(id, message, type) {
   const el = document.getElementById(id);
+  if (!el) return;
   el.textContent = message;
   el.className = `status-msg ${type}`;
 }
-function hideStatus(id) { document.getElementById(id).className = 'status-msg hidden'; }
+function hideStatus(id) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'status-msg hidden';
+}
 
 function copyText(text, btnEl) {
   if (!text) return;
@@ -32,90 +36,70 @@ function copyText(text, btnEl) {
 }
 
 function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ── Extractive summarizer (TF-IDF local) ──────────────────────────────────
-
-const STOPWORDS = new Set([
-  'le','la','les','de','du','des','un','une','en','et','est','à','au','aux',
-  'se','sa','son','ses','qui','que','qu','ce','cet','cette','ces','je','tu',
-  'il','elle','nous','vous','ils','elles','mon','ma','mes','ton','ta','tes',
-  'leur','leurs','y','me','te','lui','ne','pas','plus','très','aussi','car',
-  'mais','ou','donc','or','ni','sur','sous','dans','par','pour','avec','sans',
-  'entre','vers','chez','alors','puis','bien','tout','tous','même','si','on',
-  'être','avoir','faire','dit','peut','après','avant','quand','comme','dont',
-  'où','lors','était','sont','ont','été','fait','par','non',
-  'the','a','an','is','are','was','were','be','been','have','has','had',
-  'do','does','did','will','would','shall','should','may','might','must',
-  'can','could','of','in','on','at','to','for','with','by','from','and',
-  'or','but','not','this','that','these','those','it','he','she','we',
-  'they','i','you','its','his','her','our','their','which','who','what',
-  'when','where','how','all','one','also','as','so','if','up','out','no',
-  'new','more','said','about','just','into','than','then'
-]);
-
-function tokenize(text) {
-  return (text.toLowerCase().match(/[a-zàâäéèêëîïôùûüçœ'-]+/g) || [])
-    .filter(w => w.length > 2 && !STOPWORDS.has(w));
+function getDomain(url) {
+  try { return new URL(url).hostname; } catch { return ''; }
 }
 
-function summarizeLocally(text, n = 5) {
-  const sentences = text.replace(/\s+/g, ' ')
-    .split(/(?<=[.!?…])\s+(?=[A-ZÀÂÉÈÙÎ"«(])/)
-    .map(s => s.trim())
-    .filter(s => { const wc = s.split(/\s+/).length; return wc >= 6 && wc <= 80; });
+// ── Theme System ─────────────────────────────────────────────────────────────
 
-  if (!sentences.length) return text.slice(0, 800);
-  if (sentences.length <= n) return sentences.join(' ');
-
-  const freq = {};
-  sentences.forEach(s => tokenize(s).forEach(w => { freq[w] = (freq[w] || 0) + 1; }));
-  const total = sentences.length;
-
-  return sentences
-    .map((s, i) => {
-      const words = tokenize(s);
-      if (!words.length) return { s, score: 0, i };
-      const tf  = words.reduce((sum, w) => sum + (freq[w] || 0), 0) / Math.sqrt(words.length);
-      const pos = i < 3 ? 1.3 : i >= total - 2 ? 1.15 : 1.0;
-      const len = words.length < 8 ? 0.8 : 1.0;
-      return { s, score: tf * pos * len, i };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, n)
-    .sort((a, b) => a.i - b.i)
-    .map(t => t.s)
-    .join(' ');
-}
-
-// ── AI Summary ─────────────────────────────────────────────────────────────
-
-async function runSummary(getText) {
-  const btnSel  = document.getElementById('btn-summarize-selection');
-  const btnPage = document.getElementById('btn-summarize-page');
-  btnSel.disabled = btnPage.disabled = true;
-  setStatus('ai-status', '⏳ Analyse en cours…', 'info');
-  document.getElementById('ai-result').value = '';
-  document.getElementById('btn-copy-summary').classList.add('hidden');
-
-  try {
-    const text = await getText();
-    if (!text || text.trim().length < 100) {
-      setStatus('ai-status', '❌ Pas assez de texte — sélectionnez plus de contenu.', 'error');
-      return;
-    }
-    const summary = summarizeLocally(text, 5);
-    document.getElementById('ai-result').value = summary;
-    document.getElementById('btn-copy-summary').classList.remove('hidden');
-    const ratio = Math.round((1 - summary.length / text.length) * 100);
-    setStatus('ai-status', `✅ Résumé — texte réduit de ${ratio} %.`, 'success');
-  } catch (err) {
-    setStatus('ai-status', `❌ ${err.message}`, 'error');
-  } finally {
-    btnSel.disabled = btnPage.disabled = false;
+const THEMES = {
+  dark: {
+    '--bg': '#0f172a', '--surface': '#1e293b', '--surface2': '#243047',
+    '--border': '#334155', '--accent': '#6366f1', '--accent-dim': '#4f46e5',
+    '--text': '#e2e8f0', '--muted': '#64748b',
+    '--header-from': '#6366f1', '--header-to': '#8b5cf6'
+  },
+  oled: {
+    '--bg': '#000000', '--surface': '#0a0a0a', '--surface2': '#111111',
+    '--border': '#1a1a1a', '--accent': '#7c3aed', '--accent-dim': '#6d28d9',
+    '--text': '#e2e8f0', '--muted': '#4b5563',
+    '--header-from': '#312e81', '--header-to': '#4c1d95'
+  },
+  gaming: {
+    '--bg': '#050a0e', '--surface': '#0d1b2a', '--surface2': '#1b2838',
+    '--border': '#1f4068', '--accent': '#00ff88', '--accent-dim': '#00cc6a',
+    '--text': '#e2e8f0', '--muted': '#4a6fa5',
+    '--header-from': '#00c853', '--header-to': '#00e676'
+  },
+  purple: {
+    '--bg': '#12041e', '--surface': '#1e0533', '--surface2': '#2a0a42',
+    '--border': '#4a1a6e', '--accent': '#c084fc', '--accent-dim': '#a855f7',
+    '--text': '#f3e8ff', '--muted': '#9333ea',
+    '--header-from': '#7e22ce', '--header-to': '#c026d3'
+  },
+  opera: {
+    '--bg': '#1a0505', '--surface': '#2d0b0b', '--surface2': '#3d1111',
+    '--border': '#5c1f1f', '--accent': '#ff3333', '--accent-dim': '#cc0000',
+    '--text': '#ffe4e4', '--muted': '#9f5050',
+    '--header-from': '#b91c1c', '--header-to': '#dc2626'
+  },
+  light: {
+    '--bg': '#f1f5f9', '--surface': '#ffffff', '--surface2': '#e2e8f0',
+    '--border': '#cbd5e1', '--accent': '#6366f1', '--accent-dim': '#4f46e5',
+    '--text': '#0f172a', '--muted': '#64748b',
+    '--header-from': '#6366f1', '--header-to': '#8b5cf6'
   }
+};
+
+function applyTheme(themeKey, customAccent = null) {
+  const vars = THEMES[themeKey] || THEMES.dark;
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  if (customAccent) {
+    root.style.setProperty('--accent', customAccent);
+    root.style.setProperty('--accent-dim', customAccent);
+  }
+  document.querySelectorAll('.theme-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.theme === themeKey)
+  );
 }
+
+// ── Content helpers ──────────────────────────────────────────────────────────
 
 function getSelectedText() {
   return new Promise(resolve => {
@@ -144,42 +128,217 @@ function getPageText() {
   });
 }
 
-document.getElementById('btn-summarize-selection').addEventListener('click', () => runSummary(getSelectedText));
-document.getElementById('btn-summarize-page').addEventListener('click', () => runSummary(getPageText));
-document.getElementById('btn-copy-summary').addEventListener('click', function () {
-  copyText(document.getElementById('ai-result').value, this);
+// ── AI Chat ──────────────────────────────────────────────────────────────────
+
+const SYSTEM_PROMPTS = {
+  chat:       'Tu es DevIA, un assistant IA expert et direct intégré dans le navigateur. Tu maîtrises la tech, le gaming, le développement web, les mathématiques et les sciences. Réponds en français, de manière concise et précise. Utilise du markdown si utile (gras, italique, code).',
+  resume:     'Résume le texte suivant en 3 à 6 phrases claires et concises en français. Garde uniquement les informations essentielles.',
+  correction: "Corrige les fautes d'orthographe, de grammaire et de style du texte suivant. Retourne uniquement le texte corrigé, sans explication.",
+  traduction: 'Si le texte est en français, traduis-le en anglais. Sinon, traduis-le en français. Retourne uniquement la traduction.',
+  expliquer:  "Explique simplement le concept ou texte suivant comme à un débutant. Utilise des analogies concrètes et un vocabulaire accessible."
+};
+
+let chatHistory = [];
+let aiEngine = 'pollinations';
+let chromeAiSession = null;
+
+async function initAI() {
+  const badge = document.getElementById('ai-engine-badge');
+  try {
+    if (window.ai && window.ai.languageModel) {
+      const cap = await window.ai.languageModel.capabilities();
+      if (cap.available === 'readily' || cap.available === 'after-download') {
+        aiEngine = 'chrome';
+        badge.textContent = '⚡ Chrome AI (local)';
+        badge.style.cssText = 'background:rgba(74,222,128,0.15);color:#4ade80;';
+        return;
+      }
+    }
+  } catch {}
+  aiEngine = 'pollinations';
+  badge.textContent = '🌐 Pollinations.ai';
+  badge.style.cssText = 'background:rgba(99,102,241,0.15);color:#818cf8;';
+}
+
+async function* streamChromeAI(userMessage, systemPrompt) {
+  if (!chromeAiSession) {
+    chromeAiSession = await window.ai.languageModel.create({ systemPrompt });
+  }
+  const stream = chromeAiSession.promptStreaming(userMessage);
+  let lastLen = 0;
+  for await (const chunk of stream) {
+    const newText = chunk.slice(lastLen);
+    lastLen = chunk.length;
+    if (newText) yield newText;
+  }
+}
+
+async function* streamPollinationsAI(messages, modelId) {
+  const MODEL_MAP = { openai: 'openai', mistral: 'mistral', llama: 'llama' };
+  const model = MODEL_MAP[modelId] || 'openai';
+
+  const resp = await fetch('https://text.pollinations.ai/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, stream: true, seed: Math.floor(Math.random() * 9999) })
+  });
+
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      if (raw === '[DONE]') return;
+      try {
+        const parsed = JSON.parse(raw);
+        const chunk = parsed.choices?.[0]?.delta?.content || '';
+        if (chunk) yield chunk;
+      } catch {}
+    }
+  }
+}
+
+function formatMarkdown(text) {
+  return esc(text)
+    .replace(/```[\s\S]*?```/g, m => `<pre><code>${m.slice(3, -3).replace(/^[a-z]+\n/, '')}</code></pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function appendChatMsg(role, content = '', streaming = false) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const avatar = role === 'assistant' ? '🤖' : '👤';
+  const bubbleId = `bubble-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  div.innerHTML = `<span class="chat-avatar">${avatar}</span><div class="chat-bubble" id="${bubbleId}">${streaming ? '<span class="typing-cursor"></span>' : esc(content)}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return bubbleId;
+}
+
+function updateBubble(bubbleId, text) {
+  const el = document.getElementById(bubbleId);
+  if (!el) return;
+  el.innerHTML = formatMarkdown(text) + '<span class="typing-cursor"></span>';
+  el.closest('.chat-messages').scrollTop = el.closest('.chat-messages').scrollHeight;
+}
+
+function finishBubble(bubbleId, text) {
+  const el = document.getElementById(bubbleId);
+  if (!el) return;
+  el.innerHTML = formatMarkdown(text);
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const mode = document.getElementById('ai-mode').value;
+  const modelId = document.getElementById('ai-model').value;
+  const systemPrompt = SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.chat;
+
+  appendChatMsg('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+
+  const bubbleId = appendChatMsg('assistant', '', true);
+  const sendBtn = document.getElementById('btn-send-chat');
+  sendBtn.disabled = true;
+
+  let fullText = '';
+
+  try {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...chatHistory.slice(-14)
+    ];
+
+    const gen = aiEngine === 'chrome'
+      ? streamChromeAI(msg, systemPrompt)
+      : streamPollinationsAI(messages, modelId);
+
+    for await (const chunk of gen) {
+      fullText += chunk;
+      updateBubble(bubbleId, fullText);
+    }
+
+    finishBubble(bubbleId, fullText || '(pas de réponse)');
+    if (fullText) chatHistory.push({ role: 'assistant', content: fullText });
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+  } catch (err) {
+    finishBubble(bubbleId, `❌ Erreur : ${esc(err.message)}`);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById('btn-send-chat').addEventListener('click', sendChat);
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
 });
 
-(function detectSelection() {
-  const session = chrome.storage.session;
-  const doDetect = () => getSelectedText().then(text => {
-    if (text && text.trim().length >= 100)
-      setStatus('ai-status', `📋 Texte sélectionné (${text.length} car.). Cliquez pour résumer.`, 'info');
+document.getElementById('btn-clear-chat').addEventListener('click', () => {
+  chatHistory = [];
+  chromeAiSession = null;
+  const c = document.getElementById('chat-messages');
+  c.innerHTML = `<div class="chat-msg assistant"><span class="chat-avatar">🤖</span><div class="chat-bubble">Bonjour ! Je suis DevIA, ton assistant intégré. Pose-moi une question, colle du texte, ou utilise les boutons ci-dessous pour analyser la page courante.</div></div>`;
+});
+
+document.getElementById('btn-insert-page').addEventListener('click', async () => {
+  const text = await getPageText();
+  if (!text) return;
+  const inp = document.getElementById('chat-input');
+  inp.value = (inp.value ? inp.value + '\n\n' : '') + text.slice(0, 3000);
+  inp.focus();
+});
+
+document.getElementById('btn-insert-selection').addEventListener('click', async () => {
+  const text = await getSelectedText();
+  if (!text) return;
+  const inp = document.getElementById('chat-input');
+  inp.value = (inp.value ? inp.value + '\n\n' : '') + text.slice(0, 3000);
+  inp.focus();
+});
+
+// Check for right-click context menu pending selection
+(function checkPendingSelection() {
+  if (!chrome.storage.session) return;
+  chrome.storage.session.get(['pendingSelection'], r => {
+    if (!r.pendingSelection) return;
+    chrome.storage.session.remove('pendingSelection');
+    document.getElementById('chat-input').value = r.pendingSelection.slice(0, 3000);
+    document.querySelector('.tab-btn[data-tab="ai"]').click();
   });
-  if (session) {
-    session.get(['pendingSelection'], r => {
-      if (r.pendingSelection) {
-        session.remove('pendingSelection');
-        setStatus('ai-status', `📋 Texte depuis clic-droit (${r.pendingSelection.length} car.). Cliquez pour résumer.`, 'info');
-      } else doDetect();
-    });
-  } else doDetect();
 })();
 
-// ── Calculator (no eval — recursive descent parser) ───────────────────────
+// ── Calculator (safe recursive descent parser) ───────────────────────────────
 
 function mathEval(expr) {
   expr = expr.replace(/\s/g, '').replace(/,/g, '.');
   let p = 0;
   const peek = () => expr[p];
-  const eat   = c => { if (expr[p] === c) { p++; return true; } return false; };
+  const eat = c => { if (expr[p] === c) { p++; return true; } return false; };
 
-  function parseExpr()  { return parseAddSub(); }
+  function parseExpr() { return parseAddSub(); }
   function parseAddSub() {
     let v = parseMulDiv();
-    while (p < expr.length && (peek() === '+' || peek() === '-')) {
+    while (p < expr.length && (peek() === '+' || peek() === '-'))
       v = peek() === '+' ? (p++, v + parseMulDiv()) : (p++, v - parseMulDiv());
-    }
     return v;
   }
   function parseMulDiv() {
@@ -192,8 +351,8 @@ function mathEval(expr) {
     return v;
   }
   function parsePow() {
-    let base = parseUnary();
-    if (peek() === '^') { p++; base = Math.pow(base, parsePow()); }
+    const base = parseUnary();
+    if (peek() === '^') { p++; return Math.pow(base, parsePow()); }
     return base;
   }
   function parseUnary() {
@@ -202,23 +361,11 @@ function mathEval(expr) {
     return parsePrimary();
   }
   function parsePrimary() {
-    if (eat('(')) {
-      const v = parseExpr();
-      eat(')');
-      return v;
-    }
-    // Functions: sqrt, abs, round, floor, ceil, log, sin, cos, tan
+    if (eat('(')) { const v = parseExpr(); eat(')'); return v; }
     const fnMatch = expr.slice(p).match(/^(sqrt|abs|round|floor|ceil|log|sin|cos|tan)\(/);
-    if (fnMatch) {
-      p += fnMatch[0].length;
-      const arg = parseExpr();
-      eat(')');
-      return Math[fnMatch[1]](arg);
-    }
-    // pi / e
-    if (expr.slice(p, p+2) === 'pi') { p += 2; return Math.PI; }
-    if (expr[p] === 'e' && !/\d/.test(expr[p+1] || '')) { p++; return Math.E; }
-    // Number
+    if (fnMatch) { p += fnMatch[0].length; const arg = parseExpr(); eat(')'); return Math[fnMatch[1]](arg); }
+    if (expr.slice(p, p + 2) === 'pi') { p += 2; return Math.PI; }
+    if (expr[p] === 'e' && !/\d/.test(expr[p + 1] || '')) { p++; return Math.E; }
     const start = p;
     while (p < expr.length && /[\d.]/.test(expr[p])) p++;
     if (p === start) throw new Error('Syntaxe invalide');
@@ -238,20 +385,15 @@ function doCalc() {
   if (!raw) return;
   try {
     const res = mathEval(raw);
-    // Pretty print: avoid floating-point noise
     calcResult.value = Number.isInteger(res) ? String(res) : parseFloat(res.toPrecision(12)).toString();
-  } catch (e) {
-    calcResult.value = `❌ ${e.message}`;
-  }
+  } catch (e) { calcResult.value = `❌ ${e.message}`; }
 }
 
 document.getElementById('btn-calc').addEventListener('click', doCalc);
 calcInput.addEventListener('keydown', e => { if (e.key === 'Enter') doCalc(); });
-document.getElementById('btn-copy-calc').addEventListener('click', function () {
-  copyText(calcResult.value, this);
-});
+document.getElementById('btn-copy-calc').addEventListener('click', function () { copyText(calcResult.value, this); });
 
-// ── Password Generator ─────────────────────────────────────────────────────
+// ── Password Generator ───────────────────────────────────────────────────────
 
 function generatePassword() {
   const upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -274,50 +416,49 @@ function generatePassword() {
 }
 
 function updateStrength(pw) {
-  const bar = document.getElementById('pw-strength');
+  const bar  = document.getElementById('pw-strength');
   const fill = document.getElementById('pw-strength-fill');
   bar.classList.remove('hidden');
   let s = 0;
-  if (pw.length >= 8)  s++;
-  if (pw.length >= 12) s++;
-  if (pw.length >= 16) s++;
-  if (/[A-Z]/.test(pw)) s++;
-  if (/[a-z]/.test(pw)) s++;
-  if (/[0-9]/.test(pw)) s++;
+  if (pw.length >= 8)         s++;
+  if (pw.length >= 12)        s++;
+  if (pw.length >= 16)        s++;
+  if (/[A-Z]/.test(pw))      s++;
+  if (/[a-z]/.test(pw))      s++;
+  if (/[0-9]/.test(pw))      s++;
   if (/[^A-Za-z0-9]/.test(pw)) s++;
-  fill.style.width      = `${Math.round((s/7)*100)}%`;
+  fill.style.width      = `${Math.round((s / 7) * 100)}%`;
   fill.style.background = s <= 2 ? '#f87171' : s <= 4 ? '#fbbf24' : '#4ade80';
 }
 
 document.getElementById('btn-gen-pw').addEventListener('click', generatePassword);
-document.getElementById('btn-copy-pw').addEventListener('click', function () {
-  copyText(document.getElementById('pw-result').value, this);
-});
+document.getElementById('btn-copy-pw').addEventListener('click', function () { copyText(document.getElementById('pw-result').value, this); });
 generatePassword();
 
-// ── Color converter ────────────────────────────────────────────────────────
+// ── Color Converter ──────────────────────────────────────────────────────────
 
 function hexToRgb(hex) {
   hex = hex.replace(/^#/, '');
-  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
   const n = parseInt(hex, 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
 function rgbToHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r,g,b), min = Math.min(r,g,b);
-  let h = 0, s = 0, l = (max+min)/2;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
-    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
-    switch(max) {
-      case r: h = ((g-b)/d + (g<b?6:0)) / 6; break;
-      case g: h = ((b-r)/d + 2) / 6; break;
-      case b: h = ((r-g)/d + 4) / 6; break;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
     }
   }
-  return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
 function updateColorFromHex(hex) {
@@ -332,54 +473,35 @@ function updateColorFromHex(hex) {
 
 const colorPicker = document.getElementById('color-picker');
 const colorHex    = document.getElementById('color-hex');
-
-colorPicker.addEventListener('input', () => {
-  colorHex.value = colorPicker.value;
-  updateColorFromHex(colorPicker.value);
-});
-colorHex.addEventListener('input', () => updateColorFromHex(colorHex.value));
+colorPicker.addEventListener('input', () => { colorHex.value = colorPicker.value; updateColorFromHex(colorPicker.value); });
+colorHex.addEventListener('input',   () => updateColorFromHex(colorHex.value));
 colorHex.value = '#6366f1';
 updateColorFromHex('#6366f1');
 
-document.getElementById('btn-copy-hex').addEventListener('click', function () {
-  copyText(colorHex.value, this);
-});
-document.getElementById('btn-copy-rgb').addEventListener('click', function () {
-  copyText(document.getElementById('color-rgb').value, this);
-});
-document.getElementById('btn-copy-hsl').addEventListener('click', function () {
-  copyText(document.getElementById('color-hsl').value, this);
-});
+document.getElementById('btn-copy-hex').addEventListener('click', function () { copyText(colorHex.value, this); });
+document.getElementById('btn-copy-rgb').addEventListener('click', function () { copyText(document.getElementById('color-rgb').value, this); });
+document.getElementById('btn-copy-hsl').addEventListener('click', function () { copyText(document.getElementById('color-hsl').value, this); });
 
-// ── UUID Generator ─────────────────────────────────────────────────────────
+// ── UUID Generator ───────────────────────────────────────────────────────────
 
-function genUUID() {
-  document.getElementById('uuid-result').value = crypto.randomUUID();
-}
+document.getElementById('btn-gen-uuid').addEventListener('click', () => { document.getElementById('uuid-result').value = crypto.randomUUID(); });
+document.getElementById('btn-copy-uuid').addEventListener('click', function () { copyText(document.getElementById('uuid-result').value, this); });
+document.getElementById('uuid-result').value = crypto.randomUUID();
 
-document.getElementById('btn-gen-uuid').addEventListener('click', genUUID);
-document.getElementById('btn-copy-uuid').addEventListener('click', function () {
-  copyText(document.getElementById('uuid-result').value, this);
-});
-genUUID();
-
-// ── SHA-256 Hash ───────────────────────────────────────────────────────────
+// ── SHA-256 Hash ─────────────────────────────────────────────────────────────
 
 async function genHash() {
   const text = document.getElementById('hash-input').value;
   if (!text) { document.getElementById('hash-output').value = ''; return; }
-  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  const hex = Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join('');
-  document.getElementById('hash-output').value = hex;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  document.getElementById('hash-output').value = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 document.getElementById('btn-gen-hash').addEventListener('click', genHash);
 document.getElementById('hash-input').addEventListener('keydown', e => { if (e.key === 'Enter') genHash(); });
-document.getElementById('btn-copy-hash').addEventListener('click', function () {
-  copyText(document.getElementById('hash-output').value, this);
-});
+document.getElementById('btn-copy-hash').addEventListener('click', function () { copyText(document.getElementById('hash-output').value, this); });
 
-// ── Timestamp ─────────────────────────────────────────────────────────────
+// ── Timestamp ────────────────────────────────────────────────────────────────
 
 function updateTimestamp() {
   const raw = document.getElementById('ts-unix').value.trim();
@@ -387,8 +509,8 @@ function updateTimestamp() {
   const ts = parseInt(raw);
   if (isNaN(ts)) { document.getElementById('ts-date').value = '❌ Invalide'; return; }
   document.getElementById('ts-date').value = new Date(ts * 1000).toLocaleString('fr-FR', {
-    weekday:'long', year:'numeric', month:'long',
-    day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'
+    weekday: 'long', year: 'numeric', month: 'long',
+    day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
 }
 
@@ -397,12 +519,10 @@ document.getElementById('btn-ts-now').addEventListener('click', () => {
   document.getElementById('ts-unix').value = Math.floor(Date.now() / 1000);
   updateTimestamp();
 });
-document.getElementById('btn-copy-ts').addEventListener('click', function () {
-  copyText(document.getElementById('ts-unix').value, this);
-});
+document.getElementById('btn-copy-ts').addEventListener('click', function () { copyText(document.getElementById('ts-unix').value, this); });
 document.getElementById('btn-ts-now').click();
 
-// ── Code Tools (JSON / B64 / URL) ─────────────────────────────────────────
+// ── JSON / Base64 / URL ──────────────────────────────────────────────────────
 
 const jsonInput = document.getElementById('json-input');
 const jsonError = document.getElementById('json-error');
@@ -443,7 +563,7 @@ document.getElementById('btn-url-decode').addEventListener('click', () => {
 });
 document.getElementById('btn-copy-url').addEventListener('click', function () { copyText(document.getElementById('url-output').value, this); });
 
-// ── Dice Roller ────────────────────────────────────────────────────────────
+// ── Dice Roller ──────────────────────────────────────────────────────────────
 
 const diceHistory = [];
 
@@ -452,33 +572,27 @@ document.querySelectorAll('.dice-btn').forEach(btn => {
     const sides  = parseInt(btn.dataset.sides);
     const result = Math.floor(Math.random() * sides) + 1;
     const display = document.getElementById('dice-display');
-
     display.classList.remove('rolling');
-    void display.offsetWidth; // reflow
+    void display.offsetWidth;
     display.classList.add('rolling');
     display.textContent = result;
-
-    // Color coding: 1 = red, max = gold, else purple
     display.style.color = result === 1 ? '#f87171' : result === sides ? '#fbbf24' : '#818cf8';
-
-    // History (last 8)
     diceHistory.unshift({ sides, result });
     if (diceHistory.length > 8) diceHistory.pop();
-    const histEl = document.getElementById('dice-history');
-    histEl.innerHTML = diceHistory
+    document.getElementById('dice-history').innerHTML = diceHistory
       .map(d => `<span class="dice-chip"><span class="die-label">D${d.sides}</span> ${d.result}</span>`)
       .join('');
   });
 });
 
-// ── Server Status ──────────────────────────────────────────────────────────
+// ── Server Status ────────────────────────────────────────────────────────────
 
 const SERVERS = [
-  { name: 'Steam',       icon: '🎮', url: 'https://store.steampowered.com/api/featured/', parse: null },
-  { name: 'Discord',     icon: '💬', url: 'https://discordstatus.com/api/v2/status.json', parse: d => d?.status?.indicator === 'none' ? 'up' : 'down' },
-  { name: 'Epic Games',  icon: '🎯', url: 'https://store.epicgames.com/', parse: null },
-  { name: 'PlayStation', icon: '🕹', url: 'https://status.playstation.com/', parse: null },
-  { name: 'Xbox Live',   icon: '🟩', url: 'https://xnotify.xboxlive.com/servicestatusv6/US/en-US', parse: null }
+  { name: 'Steam',       icon: '🎮', url: 'https://store.steampowered.com/api/featured/',           parse: null },
+  { name: 'Discord',     icon: '💬', url: 'https://discordstatus.com/api/v2/status.json',            parse: d => d?.status?.indicator === 'none' ? 'up' : 'down' },
+  { name: 'Epic Games',  icon: '🎯', url: 'https://store.epicgames.com/',                            parse: null },
+  { name: 'PlayStation', icon: '🕹', url: 'https://status.playstation.com/',                         parse: null },
+  { name: 'Xbox Live',   icon: '🟩', url: 'https://xnotify.xboxlive.com/servicestatusv6/US/en-US',  parse: null }
 ];
 
 async function checkServer(srv) {
@@ -514,7 +628,7 @@ async function loadServerStatus() {
 document.getElementById('btn-refresh-status').addEventListener('click', loadServerStatus);
 loadServerStatus();
 
-// ── Game App ID ─────────────────────────────────────────────────────────────
+// ── Steam Game Search ────────────────────────────────────────────────────────
 
 document.getElementById('btn-search-game').addEventListener('click', searchGame);
 document.getElementById('game-search').addEventListener('keydown', e => { if (e.key === 'Enter') searchGame(); });
@@ -536,12 +650,7 @@ async function searchGame() {
       const el = document.createElement('div');
       el.className = 'game-item';
       const typeLabel = game.type === 'game' ? 'Jeu' : game.type === 'dlc' ? 'DLC' : game.type || '';
-      el.innerHTML = `
-        <span class="game-name">${esc(game.name)}</span>
-        ${typeLabel ? `<span class="game-type">${esc(typeLabel)}</span>` : ''}
-        <span class="game-id">${game.id}</span>
-        <span class="copied-badge">✓</span>
-      `;
+      el.innerHTML = `<span class="game-name">${esc(game.name)}</span>${typeLabel ? `<span class="game-type">${esc(typeLabel)}</span>` : ''}<span class="game-id">${game.id}</span><span class="copied-badge">✓</span>`;
       el.addEventListener('click', () => {
         navigator.clipboard.writeText(String(game.id));
         const b = el.querySelector('.copied-badge');
@@ -553,7 +662,178 @@ async function searchGame() {
   } catch (err) { setStatus('game-status', `❌ ${err.message}`, 'error'); }
 }
 
-// ── Timer (chrome.alarms pour notif même popup fermé) ─────────────────────
+// ── Sites Manager ────────────────────────────────────────────────────────────
+
+const SITES_KEY = 'devtoolkit-sites';
+let allSites = [];
+let editingSiteId = null;
+let selectedColor = 'none';
+
+function siteMatchesSearch(site, q) {
+  return (site.title || '').toLowerCase().includes(q) ||
+    (site.url || '').toLowerCase().includes(q) ||
+    (site.desc || '').toLowerCase().includes(q) ||
+    (site.tags || []).some(t => t.toLowerCase().includes(q));
+}
+
+function renderSites(list) {
+  const container = document.getElementById('sites-list');
+  if (!list.length) {
+    container.innerHTML = '<div class="sites-empty">Aucun site sauvegardé.<br>Ajoutez un site avec les boutons ci-dessus !</div>';
+    return;
+  }
+  container.innerHTML = list.map(site => {
+    const domain = getDomain(site.url);
+    const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '';
+    const tagsHtml = (site.tags || []).map(t => `<span class="site-tag">${esc(t)}</span>`).join('');
+    const colorClass = site.color && site.color !== 'none' ? `color-${site.color}` : '';
+    return `<div class="site-card ${colorClass}" data-id="${esc(site.id)}">
+      <div class="site-card-header">
+        ${faviconUrl ? `<img class="site-favicon" src="${esc(faviconUrl)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=site-favicon-placeholder>🌐</span>'">` : '<span class="site-favicon-placeholder">🌐</span>'}
+        <div class="site-info">
+          <div class="site-title">${esc(site.title || domain)}</div>
+          <div class="site-url">${esc(site.url.length > 50 ? site.url.slice(0, 47) + '…' : site.url)}</div>
+        </div>
+        <div class="site-actions-btns">
+          <button class="site-edit-btn icon-sm" data-id="${esc(site.id)}" title="Modifier">✏️</button>
+          <button class="site-del-btn icon-sm" data-id="${esc(site.id)}" title="Supprimer">✕</button>
+        </div>
+      </div>
+      ${site.desc ? `<div class="site-desc">${esc(site.desc)}</div>` : ''}
+      ${tagsHtml ? `<div class="site-tags">${tagsHtml}</div>` : ''}
+      <div class="site-footer">
+        <span class="site-clicks">👁 ${site.clicks || 0}</span>
+        <span class="site-date">${new Date(site.addedAt).toLocaleDateString('fr-FR')}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.site-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.classList.contains('site-del-btn') || e.target.classList.contains('site-edit-btn')) return;
+      const site = allSites.find(s => s.id === card.dataset.id);
+      if (!site) return;
+      site.clicks = (site.clicks || 0) + 1;
+      chrome.storage.local.set({ [SITES_KEY]: allSites });
+      chrome.tabs.create({ url: site.url });
+    });
+  });
+
+  container.querySelectorAll('.site-del-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      allSites = allSites.filter(s => s.id !== btn.dataset.id);
+      chrome.storage.local.set({ [SITES_KEY]: allSites });
+      const q = document.getElementById('sites-search').value.toLowerCase();
+      renderSites(q ? allSites.filter(s => siteMatchesSearch(s, q)) : allSites);
+    });
+  });
+
+  container.querySelectorAll('.site-edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const site = allSites.find(s => s.id === btn.dataset.id);
+      if (site) { editingSiteId = site.id; openSiteForm(site); }
+    });
+  });
+}
+
+function openSiteForm(data = {}) {
+  document.getElementById('site-url').value   = data.url   || '';
+  document.getElementById('site-title').value = data.title || '';
+  document.getElementById('site-desc').value  = data.desc  || '';
+  document.getElementById('site-tags').value  = (data.tags || []).join(', ');
+  selectedColor = data.color || 'none';
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === selectedColor));
+  document.getElementById('site-form').classList.remove('hidden');
+  document.getElementById('btn-show-add-form').classList.add('hidden');
+  document.getElementById('site-url').focus();
+}
+
+function closeSiteForm() {
+  document.getElementById('site-form').classList.add('hidden');
+  document.getElementById('btn-show-add-form').classList.remove('hidden');
+  editingSiteId = null;
+}
+
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    selectedColor = dot.dataset.color;
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === selectedColor));
+  });
+});
+
+document.getElementById('btn-show-add-form').addEventListener('click', () => { editingSiteId = null; openSiteForm(); });
+document.getElementById('btn-site-cancel').addEventListener('click', closeSiteForm);
+
+document.getElementById('btn-site-save').addEventListener('click', async () => {
+  const url   = document.getElementById('site-url').value.trim();
+  if (!url) { document.getElementById('site-url').focus(); return; }
+  const title = document.getElementById('site-title').value.trim();
+  const desc  = document.getElementById('site-desc').value.trim();
+  const tags  = document.getElementById('site-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  if (editingSiteId) {
+    const site = allSites.find(s => s.id === editingSiteId);
+    if (site) { site.url = url; site.title = title || getDomain(url); site.desc = desc; site.tags = tags; site.color = selectedColor; }
+  } else {
+    allSites.unshift({ id: crypto.randomUUID(), url, title: title || getDomain(url), desc, tags, color: selectedColor, addedAt: Date.now(), clicks: 0 });
+  }
+
+  chrome.storage.local.set({ [SITES_KEY]: allSites });
+  closeSiteForm();
+  renderSites(allSites);
+});
+
+document.getElementById('btn-capture-page').addEventListener('click', () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    const tab = tabs[0];
+    if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('about:')) return;
+    editingSiteId = null;
+    openSiteForm({ url: tab.url, title: tab.title || '' });
+  });
+});
+
+document.getElementById('sites-search').addEventListener('input', function () {
+  const q = this.value.toLowerCase();
+  renderSites(q ? allSites.filter(s => siteMatchesSearch(s, q)) : allSites);
+});
+
+// ── Style / Theme Customization ──────────────────────────────────────────────
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const theme = btn.dataset.theme;
+    applyTheme(theme);
+    chrome.storage.local.set({ 'devtoolkit-theme': theme, 'devtoolkit-accent': null });
+    document.getElementById('custom-accent').value = '#6366f1';
+  });
+});
+
+document.getElementById('custom-accent').addEventListener('input', function () {
+  document.documentElement.style.setProperty('--accent', this.value);
+  document.documentElement.style.setProperty('--accent-dim', this.value);
+  chrome.storage.local.set({ 'devtoolkit-accent': this.value });
+});
+
+document.getElementById('font-size-range').addEventListener('input', function () {
+  document.getElementById('font-size-val').textContent = `${this.value}px`;
+  document.documentElement.style.setProperty('--font-size', `${this.value}px`);
+  chrome.storage.local.set({ 'devtoolkit-font-size': this.value });
+});
+
+document.getElementById('popup-width-range').addEventListener('input', function () {
+  document.getElementById('popup-width-val').textContent = `${this.value}px`;
+  document.documentElement.style.setProperty('--popup-width', `${this.value}px`);
+  chrome.storage.local.set({ 'devtoolkit-popup-width': this.value });
+});
+
+document.getElementById('toggle-anim').addEventListener('change', function () {
+  document.body.classList.toggle('no-anim', !this.checked);
+  chrome.storage.local.set({ 'devtoolkit-anim': this.checked });
+});
+
+// ── Timer (chrome.alarms for background notification) ───────────────────────
 
 const timerDisplay = document.getElementById('timer-display');
 let timerInterval  = null;
@@ -564,7 +844,7 @@ function formatHMS(sec) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 function getTimerSeconds() {
@@ -579,9 +859,7 @@ function timerTick() {
   timerDisplay.textContent = formatHMS(remaining);
   timerDisplay.classList.toggle('danger', remaining <= 10 && remaining > 0);
   if (remaining === 0) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    timerRunning  = false;
+    clearInterval(timerInterval); timerInterval = null; timerRunning = false;
     timerDisplay.classList.remove('danger');
     timerDisplay.classList.add('done');
     document.getElementById('btn-timer-start').disabled = false;
@@ -594,16 +872,11 @@ document.getElementById('btn-timer-start').addEventListener('click', () => {
   if (timerRunning) return;
   const total = getTimerSeconds();
   if (total <= 0) return;
-  timerEndTs   = Date.now() + total * 1000;
+  timerEndTs = Date.now() + total * 1000;
   timerRunning = true;
   timerDisplay.classList.remove('done', 'danger');
   hideStatus('timer-status');
-
-  // chrome.alarms: notification même si popup fermé
-  if (chrome.alarms) {
-    chrome.alarms.create('devtoolkit-timer', { delayInMinutes: total / 60 });
-  }
-
+  if (chrome.alarms) chrome.alarms.create('devtoolkit-timer', { delayInMinutes: total / 60 });
   clearInterval(timerInterval);
   timerTick();
   timerInterval = setInterval(timerTick, 500);
@@ -612,20 +885,15 @@ document.getElementById('btn-timer-start').addEventListener('click', () => {
 });
 
 document.getElementById('btn-timer-pause').addEventListener('click', () => {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    timerRunning  = false;
-    chrome.alarms?.clear('devtoolkit-timer');
-    document.getElementById('btn-timer-start').disabled = false;
-    document.getElementById('btn-timer-pause').disabled = true;
-  }
+  if (!timerInterval) return;
+  clearInterval(timerInterval); timerInterval = null; timerRunning = false;
+  chrome.alarms?.clear('devtoolkit-timer');
+  document.getElementById('btn-timer-start').disabled = false;
+  document.getElementById('btn-timer-pause').disabled = true;
 });
 
 document.getElementById('btn-timer-reset').addEventListener('click', () => {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  timerRunning  = false;
+  clearInterval(timerInterval); timerInterval = null; timerRunning = false;
   chrome.alarms?.clear('devtoolkit-timer');
   timerDisplay.textContent = formatHMS(getTimerSeconds());
   timerDisplay.classList.remove('done', 'danger');
@@ -634,14 +902,14 @@ document.getElementById('btn-timer-reset').addEventListener('click', () => {
   document.getElementById('btn-timer-pause').disabled = true;
 });
 
-['timer-h','timer-m','timer-s'].forEach(id => {
+['timer-h', 'timer-m', 'timer-s'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     if (!timerRunning) timerDisplay.textContent = formatHMS(getTimerSeconds());
   });
 });
 timerDisplay.textContent = formatHMS(getTimerSeconds());
 
-// ── Chronomètre ────────────────────────────────────────────────────────────
+// ── Stopwatch / Chrono ───────────────────────────────────────────────────────
 
 let chronoStart   = 0;
 let chronoElapsed = 0;
@@ -683,12 +951,12 @@ document.getElementById('btn-chrono-start').addEventListener('click', function (
 
 document.getElementById('btn-chrono-lap').addEventListener('click', () => {
   lapCount++;
-  const lapTime  = chronoElapsed - lastLapTime;
-  lastLapTime    = chronoElapsed;
-  const lapsEl   = document.getElementById('chrono-laps');
-  const item     = document.createElement('div');
+  const lapTime = chronoElapsed - lastLapTime;
+  lastLapTime = chronoElapsed;
+  const lapsEl = document.getElementById('chrono-laps');
+  const item = document.createElement('div');
   item.className = 'lap-item';
-  item.innerHTML = `<span class="lap-num">Lap ${lapCount}</span><span>${formatChronoMs(chronoElapsed)}</span><span style="color:#64748b">+${formatChronoMs(lapTime)}</span>`;
+  item.innerHTML = `<span class="lap-num">Lap ${lapCount}</span><span>${formatChronoMs(chronoElapsed)}</span><span style="color:var(--muted)">+${formatChronoMs(lapTime)}</span>`;
   lapsEl.insertBefore(item, lapsEl.firstChild);
 });
 
@@ -702,13 +970,11 @@ document.getElementById('btn-chrono-reset').addEventListener('click', () => {
   document.getElementById('chrono-laps').innerHTML = '';
 });
 
-// ── Notes rapides ──────────────────────────────────────────────────────────
+// ── Notes ────────────────────────────────────────────────────────────────────
 
 const notesArea  = document.getElementById('notes-area');
 const notesSaved = document.getElementById('notes-saved');
 let saveTimer    = null;
-
-chrome.storage.local.get(['quickNotes'], r => { if (r.quickNotes) notesArea.value = r.quickNotes; });
 
 notesArea.addEventListener('input', () => {
   clearTimeout(saveTimer);
@@ -728,3 +994,40 @@ document.getElementById('btn-clear-notes').addEventListener('click', () => {
   notesSaved.textContent = 'Effacé';
   setTimeout(() => { notesSaved.textContent = ''; }, 1500);
 });
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+async function init() {
+  const keys = [
+    'devtoolkit-theme', 'devtoolkit-accent', 'devtoolkit-font-size',
+    'devtoolkit-popup-width', 'devtoolkit-anim', 'quickNotes', SITES_KEY
+  ];
+  const prefs = await new Promise(resolve => chrome.storage.local.get(keys, resolve));
+
+  const theme = prefs['devtoolkit-theme'] || 'dark';
+  applyTheme(theme, prefs['devtoolkit-accent'] || null);
+  if (prefs['devtoolkit-accent']) document.getElementById('custom-accent').value = prefs['devtoolkit-accent'];
+
+  const fontSize = prefs['devtoolkit-font-size'] || '14';
+  document.getElementById('font-size-range').value = fontSize;
+  document.getElementById('font-size-val').textContent = `${fontSize}px`;
+  document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
+
+  const popupWidth = prefs['devtoolkit-popup-width'] || '420';
+  document.getElementById('popup-width-range').value = popupWidth;
+  document.getElementById('popup-width-val').textContent = `${popupWidth}px`;
+  document.documentElement.style.setProperty('--popup-width', `${popupWidth}px`);
+
+  const animEnabled = prefs['devtoolkit-anim'] !== false;
+  document.getElementById('toggle-anim').checked = animEnabled;
+  document.body.classList.toggle('no-anim', !animEnabled);
+
+  if (prefs.quickNotes) notesArea.value = prefs.quickNotes;
+
+  allSites = prefs[SITES_KEY] || [];
+  renderSites(allSites);
+
+  await initAI();
+}
+
+init();
