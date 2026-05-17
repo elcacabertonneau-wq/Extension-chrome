@@ -22,12 +22,9 @@
     #btn-reload:hover { background: #4f46e5; }
     #btn-open-editor { background: #243047; color: #94a3b8; }
     #btn-open-editor:hover { color: #e2e8f0; }
-    #frame {
-      width: 100%; border: none;
-      height: calc(100vh - 37px);
-    }
+    #frame { width: 100%; border: none; height: calc(100vh - 37px); }
     #empty {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
       height: calc(100vh - 37px); color: #64748b; font: 15px system-ui, sans-serif; gap: 12px;
     }
     #empty .icon { font-size: 48px; }
@@ -42,29 +39,10 @@
     <button id="btn-open-editor">✏️ Modifier</button>
   </div>
   <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
-  <div id="empty" style="display:none">
+  <div id="empty">
     <span class="icon">🖥️</span>
     <span>Aucun HTML chargé. Ouvre DevToolkit et utilise l'onglet <strong>Dev</strong>.</span>
   </div>
-
-  <script>
-    const frame = document.getElementById('frame');
-    const empty = document.getElementById('empty');
-
-    function loadPreview() {
-      chrome.storage.local.get(['devtoolkit-preview-html'], ({ 'devtoolkit-preview-html': html }) => {
-        if (!html) { frame.style.display = 'none'; empty.style.display = 'flex'; return; }
-        frame.style.display = 'block'; empty.style.display = 'none';
-        frame.srcdoc = html;
-      });
-    }
-
-    document.getElementById('btn-reload').addEventListener('click', loadPreview);
-    document.getElementById('btn-open-editor').addEventListener('click', () => {
-      chrome.action.openPopup?.().catch(() => {});
-    });
-
-    loadPreview();
-  </script>
+  <script src="preview.js"></script>
 </body>
 </html>
