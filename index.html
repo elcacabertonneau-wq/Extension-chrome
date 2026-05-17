@@ -237,9 +237,6 @@
 
     <!-- IA Résumé -->
     <div class="tab-content active" id="tab-ai">
-      <div id="api-warning" class="api-warning hidden">
-        ⚠️ Clé API manquante — <a id="link-settings" href="#">Paramètres →</a>
-      </div>
       <div class="card">
         <div class="card-title">Coller le texte à résumer</div>
         <textarea id="ai-input" placeholder="Collez ici le texte que vous souhaitez résumer…"></textarea>
@@ -300,35 +297,23 @@
       <div id="game-results"></div>
     </div>
 
-    <!-- Paramètres -->
+    <!-- À propos -->
     <div class="tab-content" id="tab-settings">
       <div class="card">
-        <div class="card-title">🤖 Clé API Gemini</div>
+        <div class="card-title">🤖 Résumé IA — 100 % local</div>
         <p style="font-size:13px; color:#94a3b8; line-height:1.6">
-          Utilisez <strong style="color:var(--text)">Gemini 2.0 Flash Lite</strong> gratuitement.<br>
-          Obtenez votre clé sur
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#818cf8">Google AI Studio →</a>
+          Le résumé utilise un algorithme <strong style="color:var(--text)">TF-IDF</strong> qui tourne
+          directement dans votre navigateur.<br>
+          Aucune clé API, aucun serveur, aucune donnée envoyée.
         </p>
         <div class="hint">
-          <strong>Gratuit :</strong> 15 req/min · 1 000 000 tokens/jour
+          <strong>Comment ça marche :</strong> les phrases les plus importantes sont sélectionnées
+          selon la fréquence des mots clés et leur position dans le texte.
         </div>
-        <div class="field">
-          <label>Clé API (commence par AIza…)</label>
-          <div class="input-row">
-            <input type="password" id="api-key" placeholder="AIzaSy…" autocomplete="off">
-            <button id="btn-toggle-key" class="btn secondary small">Voir</button>
-          </div>
-        </div>
-        <div class="btn-row">
-          <button id="btn-save-key" class="btn primary">💾 Sauvegarder</button>
-          <button id="btn-clear-key" class="btn danger small">🗑 Effacer</button>
-        </div>
-        <div id="key-status" class="status-msg hidden"></div>
       </div>
-
       <div class="card">
         <div class="card-title">ℹ️ À propos</div>
-        <p style="font-size:13px; color:#94a3b8">DevToolkit v1.0 · Résumé IA · Outils Dev · App ID Steam</p>
+        <p style="font-size:13px; color:#94a3b8">DevToolkit v1.1 · Résumé local · Outils Dev · App ID Steam</p>
       </div>
     </div>
 
@@ -367,52 +352,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 document.getElementById('btn-settings').addEventListener('click', () => goTab('settings'));
-document.getElementById('link-settings').addEventListener('click', e => { e.preventDefault(); goTab('settings'); });
 
-// ── Storage ────────────────────────────────────────────────────────────────
-
-function saveKey(k) { localStorage.setItem('geminiApiKey', k); }
-function loadKey()  { return localStorage.getItem('geminiApiKey') || ''; }
-
-// ── Settings tab ───────────────────────────────────────────────────────────
-
-const keyInput = document.getElementById('api-key');
-keyInput.value = loadKey();
-
-document.getElementById('btn-toggle-key').addEventListener('click', function () {
-  const isPass = keyInput.type === 'password';
-  keyInput.type = isPass ? 'text' : 'password';
-  this.textContent = isPass ? 'Masquer' : 'Voir';
-});
-
-document.getElementById('btn-save-key').addEventListener('click', () => {
-  const k = keyInput.value.trim();
-  if (!k) { flashKey('Clé vide !', 'error'); return; }
-  saveKey(k);
-  flashKey('Sauvegardée ✓', 'success');
-  checkApiWarning();
-});
-
-document.getElementById('btn-clear-key').addEventListener('click', () => {
-  localStorage.removeItem('geminiApiKey');
-  keyInput.value = '';
-  flashKey('Effacée', 'info');
-  checkApiWarning();
-});
-
-function flashKey(msg, type) {
-  const el = document.getElementById('key-status');
-  el.textContent = msg;
-  el.className = `status-msg ${type}`;
-  setTimeout(() => { el.className = 'status-msg hidden'; }, 2500);
-}
-
-function checkApiWarning() {
-  document.getElementById('api-warning').classList.toggle('hidden', !!loadKey());
-}
-checkApiWarning();
-
-// ── IA Résumé ──────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function setStatus(id, msg, type) {
   const el = document.getElementById(id);
@@ -421,48 +362,90 @@ function setStatus(id, msg, type) {
 }
 function hideStatus(id) { document.getElementById(id).className = 'status-msg hidden'; }
 
-document.getElementById('btn-summarize').addEventListener('click', async () => {
-  const text = document.getElementById('ai-input').value.trim();
-  const apiKey = loadKey();
+// ── Extractive summarizer (TF-IDF, 100% local, zéro API) ──────────────────
 
-  if (!apiKey) { setStatus('ai-status', '⚠️ Clé API manquante — allez dans Paramètres.', 'error'); return; }
-  if (text.length < 30) { setStatus('ai-status', '❌ Texte trop court (minimum 30 caractères).', 'error'); return; }
+const STOPWORDS = new Set([
+  'le','la','les','de','du','des','un','une','en','et','est','à','au','aux',
+  'se','sa','son','ses','qui','que','qu','ce','cet','cette','ces','je','tu',
+  'il','elle','nous','vous','ils','elles','mon','ma','mes','ton','ta','tes',
+  'leur','leurs','y','me','te','lui','ne','pas','plus','très','aussi','car',
+  'mais','ou','donc','or','ni','sur','sous','dans','par','pour','avec','sans',
+  'entre','vers','chez','alors','puis','bien','tout','tous','même','si','on',
+  'être','avoir','faire','dit','peut','après','avant','quand','comme','dont',
+  'où','lors','était','sont','ont','été','fait','cette','par','plus','non',
+  'the','a','an','is','are','was','were','be','been','have','has','had',
+  'do','does','did','will','would','shall','should','may','might','must',
+  'can','could','of','in','on','at','to','for','with','by','from','and',
+  'or','but','not','this','that','these','those','it','he','she','we',
+  'they','i','you','its','his','her','our','their','which','who','what',
+  'when','where','how','all','one','also','as','so','if','up','out','no',
+  'new','more','said','about','just','into','than','then'
+]);
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-zàâäéèêëîïôùûüçœ'-]+/g) || [])
+    .filter(w => w.length > 2 && !STOPWORDS.has(w));
+}
+
+function summarizeLocally(text, n = 5) {
+  const sentences = text.replace(/\s+/g, ' ')
+    .split(/(?<=[.!?…])\s+(?=[A-ZÀÂÉÈÙÎ"«(])/)
+    .map(s => s.trim())
+    .filter(s => { const wc = s.split(/\s+/).length; return wc >= 6 && wc <= 80; });
+
+  if (!sentences.length) return text.slice(0, 800);
+  if (sentences.length <= n) return sentences.join(' ');
+
+  const freq = {};
+  sentences.forEach(s => tokenize(s).forEach(w => { freq[w] = (freq[w] || 0) + 1; }));
+
+  const total = sentences.length;
+  const scored = sentences.map((s, i) => {
+    const words = tokenize(s);
+    if (!words.length) return { s, score: 0, i };
+    const tf = words.reduce((sum, w) => sum + (freq[w] || 0), 0) / Math.sqrt(words.length);
+    const pos = i < 3 ? 1.3 : i >= total - 2 ? 1.15 : 1.0;
+    const len = words.length < 8 ? 0.8 : 1.0;
+    return { s, score: tf * pos * len, i };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, n)
+    .sort((a, b) => a.i - b.i)
+    .map(t => t.s)
+    .join(' ');
+}
+
+// ── IA Résumé ──────────────────────────────────────────────────────────────
+
+document.getElementById('btn-summarize').addEventListener('click', () => {
+  const text = document.getElementById('ai-input').value.trim();
+  if (text.length < 100) {
+    setStatus('ai-status', '❌ Texte trop court (minimum 100 caractères).', 'error');
+    return;
+  }
 
   const btn = document.getElementById('btn-summarize');
   btn.disabled = true;
-  btn.textContent = '⏳ Résumé en cours…';
-  setStatus('ai-status', '⏳ Connexion à Gemini…', 'info');
+  btn.textContent = '⏳ Analyse…';
+  setStatus('ai-status', '⏳ Analyse en cours…', 'info');
   document.getElementById('ai-result-card').style.display = 'none';
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `Résume ce texte en français en 3 à 6 phrases claires et concises :\n\n${text.slice(0, 14000)}` }] }],
-        generationConfig: { maxOutputTokens: 400, temperature: 0.25 }
-      })
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+  setTimeout(() => {
+    try {
+      const summary = summarizeLocally(text, 5);
+      document.getElementById('ai-result').value = summary;
+      document.getElementById('ai-result-card').style.display = 'flex';
+      const ratio = Math.round((1 - summary.length / text.length) * 100);
+      setStatus('ai-status', `✅ Résumé généré — texte réduit de ${ratio} %.`, 'success');
+    } catch (err) {
+      setStatus('ai-status', `❌ ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🤖 Résumer';
     }
-
-    const data = await res.json();
-    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!summary) throw new Error('Réponse vide.');
-
-    document.getElementById('ai-result').value = summary;
-    document.getElementById('ai-result-card').style.display = 'flex';
-    setStatus('ai-status', `✅ Résumé généré (${summary.length} car.).`, 'success');
-  } catch (err) {
-    setStatus('ai-status', `❌ ${err.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🤖 Résumer';
-  }
+  }, 50);
 });
 
 document.getElementById('btn-copy-summary').addEventListener('click', function () {
