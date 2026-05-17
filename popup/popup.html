@@ -14,9 +14,10 @@
     </header>
 
     <nav class="tabs">
-      <button class="tab-btn active" data-tab="ai">🤖 IA Résumé</button>
+      <button class="tab-btn active" data-tab="ai">🤖 IA</button>
       <button class="tab-btn" data-tab="code">🛠 Code</button>
-      <button class="tab-btn" data-tab="game">🎮 App ID</button>
+      <button class="tab-btn" data-tab="game">🎮 Jeux</button>
+      <button class="tab-btn" data-tab="notes">📝 Notes</button>
     </nav>
 
     <!-- IA Résumé -->
@@ -36,6 +37,36 @@
 
     <!-- Outils Code -->
     <div class="tab-content" id="tab-code">
+      <div class="tool-section">
+        <div class="tool-header">🔐 Mot de passe</div>
+        <div class="pw-options">
+          <label class="pw-opt"><input type="checkbox" id="pw-upper" checked> A-Z</label>
+          <label class="pw-opt"><input type="checkbox" id="pw-lower" checked> a-z</label>
+          <label class="pw-opt"><input type="checkbox" id="pw-digits" checked> 0-9</label>
+          <label class="pw-opt"><input type="checkbox" id="pw-symbols"> !@#</label>
+          <input id="pw-length" type="number" value="16" min="4" max="64" class="pw-len-input">
+          <span style="font-size:12px;color:#64748b">car.</span>
+        </div>
+        <div class="btn-row">
+          <button id="btn-gen-pw" class="btn primary small">Générer</button>
+          <button id="btn-copy-pw" class="btn secondary small">Copier</button>
+        </div>
+        <input id="pw-result" type="text" readonly placeholder="Mot de passe…">
+        <div id="pw-strength" class="strength-bar hidden">
+          <div id="pw-strength-fill"></div>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🕐 Timestamp</div>
+        <div class="ts-row">
+          <input id="ts-unix" type="number" placeholder="Unix (ex: 1716000000)">
+          <button id="btn-ts-now" class="btn primary small">Maintenant</button>
+        </div>
+        <input id="ts-date" type="text" readonly placeholder="Date lisible…">
+        <button id="btn-copy-ts" class="btn secondary small">Copier</button>
+      </div>
+
       <div class="tool-section">
         <div class="tool-header">JSON Formatter</div>
         <textarea id="json-input" placeholder='{"clé": "valeur"}'></textarea>
@@ -71,14 +102,39 @@
       </div>
     </div>
 
-    <!-- App ID Jeu -->
+    <!-- Jeux -->
     <div class="tab-content" id="tab-game">
+      <!-- Statut serveurs -->
+      <div class="tool-section">
+        <div class="tool-header-row">
+          <span class="tool-header">🟢 Statut serveurs</span>
+          <button id="btn-refresh-status" class="btn secondary small">🔄</button>
+        </div>
+        <div id="server-list">
+          <div class="server-loading">Chargement…</div>
+        </div>
+      </div>
+
+      <!-- Recherche App ID -->
       <div class="search-bar">
         <input id="game-search" type="text" placeholder="Nom du jeu Steam…">
         <button id="btn-search-game" class="btn primary">Chercher</button>
       </div>
       <div id="game-status" class="status-msg hidden"></div>
       <div id="game-results"></div>
+    </div>
+
+    <!-- Notes rapides -->
+    <div class="tab-content" id="tab-notes">
+      <div class="notes-toolbar">
+        <span class="tool-header">📝 Notes rapides</span>
+        <div class="btn-row">
+          <button id="btn-copy-notes" class="btn secondary small">Copier</button>
+          <button id="btn-clear-notes" class="btn danger small">Effacer</button>
+        </div>
+      </div>
+      <textarea id="notes-area" placeholder="Notez ici un code promo, une IP de serveur, des coordonnées de map, un mot de passe temporaire…"></textarea>
+      <div id="notes-saved" class="notes-saved-indicator"></div>
     </div>
   </div>
 

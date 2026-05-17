@@ -5,7 +5,11 @@
   "description": "Résumé IA · Outils dev · App ID de jeux Steam",
   "permissions": ["activeTab", "storage", "scripting", "contextMenus"],
   "host_permissions": [
-    "https://store.steampowered.com/*"
+    "https://store.steampowered.com/*",
+    "https://discordstatus.com/*",
+    "https://store.epicgames.com/*",
+    "https://status.playstation.com/*",
+    "https://xnotify.xboxlive.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",

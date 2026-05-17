@@ -11,6 +11,17 @@ body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 14px;
   min-height: 500px;
+  max-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 600px;
 }
 
 /* Header */
@@ -87,6 +98,10 @@ header h1 {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
 }
 
 .tab-content.active {
@@ -325,4 +340,140 @@ textarea {
   padding: 1px 5px;
   border-radius: 3px;
   white-space: nowrap;
+}
+
+/* ── Tool header with button ── */
+.tool-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Password generator ── */
+.pw-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pw-opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pw-opt input[type="checkbox"] {
+  width: auto;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+
+.pw-len-input {
+  width: 52px !important;
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+  text-align: center;
+}
+
+.strength-bar {
+  height: 4px;
+  background: #334155;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-bar.hidden { display: none; }
+
+#pw-strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+
+/* ── Timestamp ── */
+.ts-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ts-row input {
+  flex: 1;
+}
+
+/* ── Server status ── */
+.server-loading {
+  color: #64748b;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.server-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1e293b;
+  font-size: 13px;
+}
+
+.server-item:last-child {
+  border-bottom: none;
+}
+
+.server-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.server-dot.up      { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+.server-dot.down    { background: #f87171; box-shadow: 0 0 6px #f8717188; }
+.server-dot.loading { background: #fbbf24; animation: pulse 1s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.server-name { flex: 1; font-weight: 500; }
+
+.server-label {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.server-label.up   { background: #14532d; color: #4ade80; }
+.server-label.down { background: #450a0a; color: #f87171; }
+.server-label.loading { background: #422006; color: #fbbf24; }
+
+/* ── Notes ── */
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#notes-area {
+  flex: 1;
+  min-height: 320px;
+  resize: none;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.notes-saved-indicator {
+  font-size: 11px;
+  color: #4ade80;
+  text-align: right;
+  min-height: 16px;
+  transition: opacity 0.5s;
 }
