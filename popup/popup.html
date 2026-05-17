@@ -23,12 +23,8 @@
     <!-- IA Résumé -->
     <div class="tab-content active" id="tab-ai">
       <div class="btn-group">
-        <button id="btn-summarize-selection" class="btn primary">
-          📋 Résumer la sélection
-        </button>
-        <button id="btn-summarize-page" class="btn secondary">
-          📄 Résumer la page
-        </button>
+        <button id="btn-summarize-selection" class="btn primary">📋 Résumer la sélection</button>
+        <button id="btn-summarize-page" class="btn secondary">📄 Résumer la page</button>
       </div>
       <div id="ai-status" class="status-msg hidden"></div>
       <textarea id="ai-result" placeholder="Le résumé apparaîtra ici..." readonly></textarea>
@@ -37,6 +33,17 @@
 
     <!-- Outils Code -->
     <div class="tab-content" id="tab-code">
+
+      <div class="tool-section">
+        <div class="tool-header">🧮 Calculatrice</div>
+        <input id="calc-input" type="text" placeholder="ex: 42 * 1.2 + 8 / 2">
+        <div class="btn-row">
+          <button id="btn-calc" class="btn primary small">= Calculer</button>
+          <button id="btn-copy-calc" class="btn secondary small">Copier</button>
+        </div>
+        <input id="calc-result" type="text" readonly placeholder="Résultat…">
+      </div>
+
       <div class="tool-section">
         <div class="tool-header">🔐 Mot de passe</div>
         <div class="pw-options">
@@ -52,9 +59,43 @@
           <button id="btn-copy-pw" class="btn secondary small">Copier</button>
         </div>
         <input id="pw-result" type="text" readonly placeholder="Mot de passe…">
-        <div id="pw-strength" class="strength-bar hidden">
-          <div id="pw-strength-fill"></div>
+        <div id="pw-strength" class="strength-bar hidden"><div id="pw-strength-fill"></div></div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🌈 Couleur</div>
+        <div class="color-row">
+          <input type="color" id="color-picker" value="#6366f1" class="color-swatch">
+          <input id="color-hex" type="text" placeholder="#6366f1">
         </div>
+        <div class="color-outputs">
+          <input id="color-rgb" type="text" readonly placeholder="rgb(…)">
+          <input id="color-hsl" type="text" readonly placeholder="hsl(…)">
+        </div>
+        <div class="btn-row">
+          <button id="btn-copy-hex" class="btn secondary small">HEX</button>
+          <button id="btn-copy-rgb" class="btn secondary small">RGB</button>
+          <button id="btn-copy-hsl" class="btn secondary small">HSL</button>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🔑 UUID</div>
+        <input id="uuid-result" type="text" readonly placeholder="UUID généré…">
+        <div class="btn-row">
+          <button id="btn-gen-uuid" class="btn primary small">Générer</button>
+          <button id="btn-copy-uuid" class="btn secondary small">Copier</button>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <div class="tool-header">🔒 Hash SHA-256</div>
+        <input id="hash-input" type="text" placeholder="Texte à hasher…">
+        <div class="btn-row">
+          <button id="btn-gen-hash" class="btn primary small">Calculer</button>
+          <button id="btn-copy-hash" class="btn secondary small">Copier</button>
+        </div>
+        <input id="hash-output" type="text" readonly placeholder="SHA-256…" class="mono-sm">
       </div>
 
       <div class="tool-section">
@@ -81,7 +122,7 @@
 
       <div class="tool-section">
         <div class="tool-header">Base64</div>
-        <input id="b64-input" type="text" placeholder="Texte à encoder / Base64 à décoder…">
+        <input id="b64-input" type="text" placeholder="Texte ou Base64…">
         <div class="btn-row">
           <button id="btn-b64-encode" class="btn primary small">Encoder</button>
           <button id="btn-b64-decode" class="btn secondary small">Décoder</button>
@@ -104,18 +145,33 @@
 
     <!-- Jeux -->
     <div class="tab-content" id="tab-game">
+
+      <!-- Dés -->
+      <div class="tool-section">
+        <div class="tool-header">🎲 Lanceur de dés</div>
+        <div class="dice-btns">
+          <button class="btn secondary small dice-btn" data-sides="4">D4</button>
+          <button class="btn secondary small dice-btn" data-sides="6">D6</button>
+          <button class="btn secondary small dice-btn" data-sides="8">D8</button>
+          <button class="btn secondary small dice-btn" data-sides="10">D10</button>
+          <button class="btn secondary small dice-btn" data-sides="12">D12</button>
+          <button class="btn primary small dice-btn" data-sides="20">D20</button>
+          <button class="btn secondary small dice-btn" data-sides="100">D100</button>
+        </div>
+        <div id="dice-display" class="dice-display">–</div>
+        <div id="dice-history" class="dice-history"></div>
+      </div>
+
       <!-- Statut serveurs -->
       <div class="tool-section">
         <div class="tool-header-row">
           <span class="tool-header">🟢 Statut serveurs</span>
           <button id="btn-refresh-status" class="btn secondary small">🔄</button>
         </div>
-        <div id="server-list">
-          <div class="server-loading">Chargement…</div>
-        </div>
+        <div id="server-list"><div class="server-loading">Chargement…</div></div>
       </div>
 
-      <!-- Recherche App ID -->
+      <!-- App ID -->
       <div class="search-bar">
         <input id="game-search" type="text" placeholder="Nom du jeu Steam…">
         <button id="btn-search-game" class="btn primary">Chercher</button>
@@ -124,16 +180,49 @@
       <div id="game-results"></div>
     </div>
 
-    <!-- Notes rapides -->
+    <!-- Notes + Timer + Chrono -->
     <div class="tab-content" id="tab-notes">
+
+      <!-- Timer -->
+      <div class="tool-section">
+        <div class="tool-header">⏱ Timer</div>
+        <div class="timer-inputs">
+          <input id="timer-h" type="number" min="0" max="99" value="0" class="timer-unit" placeholder="h">
+          <span class="timer-sep">:</span>
+          <input id="timer-m" type="number" min="0" max="59" value="5" class="timer-unit" placeholder="m">
+          <span class="timer-sep">:</span>
+          <input id="timer-s" type="number" min="0" max="59" value="0" class="timer-unit" placeholder="s">
+        </div>
+        <div id="timer-display" class="timer-display">00:05:00</div>
+        <div class="btn-row">
+          <button id="btn-timer-start" class="btn primary small">▶ Démarrer</button>
+          <button id="btn-timer-pause" class="btn secondary small" disabled>⏸ Pause</button>
+          <button id="btn-timer-reset" class="btn secondary small">↺ Reset</button>
+        </div>
+        <div id="timer-status" class="status-msg hidden"></div>
+      </div>
+
+      <!-- Chrono -->
+      <div class="tool-section">
+        <div class="tool-header">⏲ Chronomètre</div>
+        <div id="chrono-display" class="timer-display mono">00:00.00</div>
+        <div class="btn-row">
+          <button id="btn-chrono-start" class="btn primary small">▶ Start</button>
+          <button id="btn-chrono-lap" class="btn secondary small" disabled>◎ Lap</button>
+          <button id="btn-chrono-reset" class="btn secondary small">↺ Reset</button>
+        </div>
+        <div id="chrono-laps" class="chrono-laps"></div>
+      </div>
+
+      <!-- Notes -->
       <div class="notes-toolbar">
-        <span class="tool-header">📝 Notes rapides</span>
+        <span class="tool-header">📝 Notes</span>
         <div class="btn-row">
           <button id="btn-copy-notes" class="btn secondary small">Copier</button>
           <button id="btn-clear-notes" class="btn danger small">Effacer</button>
         </div>
       </div>
-      <textarea id="notes-area" placeholder="Notez ici un code promo, une IP de serveur, des coordonnées de map, un mot de passe temporaire…"></textarea>
+      <textarea id="notes-area" placeholder="Notez ici un code promo, une IP de serveur, des coordonnées de map…"></textarea>
       <div id="notes-saved" class="notes-saved-indicator"></div>
     </div>
   </div>

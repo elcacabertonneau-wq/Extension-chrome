@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "DevToolkit",
-  "version": "1.0.0",
-  "description": "Résumé IA · Outils dev · App ID de jeux Steam",
-  "permissions": ["activeTab", "storage", "scripting", "contextMenus"],
+  "version": "2.0.0",
+  "description": "Résumé IA · Outils dev · Jeux Steam · Notes & Timer",
+  "permissions": ["activeTab", "storage", "scripting", "contextMenus", "alarms", "notifications"],
   "host_permissions": [
     "https://store.steampowered.com/*",
     "https://discordstatus.com/*",
