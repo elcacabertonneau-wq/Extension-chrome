@@ -11,12 +11,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// Open options page
 document.getElementById('btn-options').addEventListener('click', () => {
-  chrome.runtime.openOptionsPage();
-});
-document.getElementById('link-options').addEventListener('click', e => {
-  e.preventDefault();
   chrome.runtime.openOptionsPage();
 });
 
@@ -32,12 +27,6 @@ function hideStatus(id) {
   document.getElementById(id).className = 'status-msg hidden';
 }
 
-async function getApiKey() {
-  return new Promise(resolve => {
-    chrome.storage.sync.get(['geminiApiKey'], r => resolve(r.geminiApiKey || ''));
-  });
-}
-
 function copyText(text, btnEl) {
   navigator.clipboard.writeText(text).then(() => {
     const original = btnEl.textContent;
@@ -46,73 +35,106 @@ function copyText(text, btnEl) {
   });
 }
 
-// ── AI Summary ─────────────────────────────────────────────────────────────
+// ── Extractive summarizer (TF-IDF, 100% local) ────────────────────────────
 
-async function checkApiKey() {
-  const key = await getApiKey();
-  document.getElementById('api-warning').classList.toggle('hidden', !!key);
-  return key;
+const STOPWORDS = new Set([
+  // Français
+  'le','la','les','de','du','des','un','une','en','et','est','à','au','aux',
+  'se','sa','son','ses','qui','que','qu','ce','cet','cette','ces','je','tu',
+  'il','elle','nous','vous','ils','elles','mon','ma','mes','ton','ta','tes',
+  'leur','leurs','y','me','te','lui','ne','pas','plus','très','aussi','car',
+  'mais','ou','donc','or','ni','sur','sous','dans','par','pour','avec','sans',
+  'entre','vers','chez','alors','puis','bien','tout','tous','même','si','on',
+  'être','avoir','faire','dit','peut','après','avant','quand','comme','dont',
+  'où','lors','était','sont','ont','été','fait','cette','par','plus','non',
+  // Anglais (pages en anglais)
+  'the','a','an','is','are','was','were','be','been','being','have','has',
+  'had','do','does','did','will','would','shall','should','may','might',
+  'must','can','could','of','in','on','at','to','for','with','by','from',
+  'and','or','but','not','this','that','these','those','it','he','she',
+  'we','they','i','you','its','his','her','our','their','which','who',
+  'what','when','where','how','all','one','two','also','as','so','if',
+  'up','out','no','new','more','said','about','just','into','than','then'
+]);
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-zàâäéèêëîïôùûüçœ'-]+/g) || [])
+    .filter(w => w.length > 2 && !STOPWORDS.has(w));
 }
 
-checkApiKey();
+function summarizeLocally(text, targetSentences = 5) {
+  // Découpe en phrases
+  const raw = text.replace(/\s+/g, ' ').trim();
+  const sentences = raw
+    .split(/(?<=[.!?…])\s+(?=[A-ZÀÂÉÈÙÎ"«(])/)
+    .map(s => s.trim())
+    .filter(s => {
+      const wc = s.split(/\s+/).length;
+      return wc >= 6 && wc <= 80;
+    });
 
-async function summarizeWithGemini(text, apiKey) {
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+  if (sentences.length === 0) return raw.slice(0, 800);
+  if (sentences.length <= targetSentences) return sentences.join(' ');
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: `Tu es un assistant qui résume des textes en français de façon claire et concise.\n\nRésume ce texte en 3 à 6 phrases maximum :\n\n${text.slice(0, 14000)}`
-        }]
-      }],
-      generationConfig: { maxOutputTokens: 400, temperature: 0.25 }
-    })
+  // Fréquence des mots dans tout le texte
+  const freq = {};
+  sentences.forEach(s => {
+    tokenize(s).forEach(w => { freq[w] = (freq[w] || 0) + 1; });
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
-  }
+  // Score de chaque phrase
+  const total = sentences.length;
+  const scored = sentences.map((s, i) => {
+    const words = tokenize(s);
+    if (words.length === 0) return { s, score: 0, i };
 
-  const data = await res.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!content) throw new Error('Réponse vide de l\'API.');
-  return content.trim();
+    // Somme TF normalisée par longueur
+    const tfScore = words.reduce((sum, w) => sum + (freq[w] || 0), 0) / Math.sqrt(words.length);
+
+    // Bonus position : intro et conclusion ont du poids
+    const posBonus = (i < 3) ? 1.3 : (i >= total - 2) ? 1.15 : 1.0;
+
+    // Malus pour les phrases très courtes
+    const lenPenalty = words.length < 8 ? 0.8 : 1.0;
+
+    return { s, score: tfScore * posBonus * lenPenalty, i };
+  });
+
+  // Top N phrases dans leur ordre d'origine
+  const top = [...scored]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, targetSentences)
+    .sort((a, b) => a.i - b.i);
+
+  return top.map(t => t.s).join(' ');
 }
 
-async function runSummary(getText) {
-  const apiKey = await checkApiKey();
-  if (!apiKey) {
-    setStatus('ai-status', '⚠️ Clé API requise — ouvrez les Options.', 'error');
-    return;
-  }
+// ── AI Summary ─────────────────────────────────────────────────────────────
 
-  const btnSel = document.getElementById('btn-summarize-selection');
+async function runSummary(getText) {
+  const btnSel  = document.getElementById('btn-summarize-selection');
   const btnPage = document.getElementById('btn-summarize-page');
-  btnSel.disabled = true;
+  btnSel.disabled  = true;
   btnPage.disabled = true;
-  setStatus('ai-status', '⏳ Résumé en cours…', 'info');
+  setStatus('ai-status', '⏳ Analyse en cours…', 'info');
   document.getElementById('ai-result').value = '';
   document.getElementById('btn-copy-summary').classList.add('hidden');
 
   try {
     const text = await getText();
-    if (!text || text.trim().length < 30) {
-      setStatus('ai-status', '❌ Pas assez de texte (sélectionnez du contenu ou chargez une page).', 'error');
+    if (!text || text.trim().length < 100) {
+      setStatus('ai-status', '❌ Pas assez de texte (sélectionnez plus de contenu).', 'error');
       return;
     }
-    const summary = await summarizeWithGemini(text, apiKey);
+    const summary = summarizeLocally(text, 5);
     document.getElementById('ai-result').value = summary;
     document.getElementById('btn-copy-summary').classList.remove('hidden');
-    setStatus('ai-status', `✅ Résumé généré (${summary.length} caractères).`, 'success');
+    const ratio = Math.round((1 - summary.length / text.length) * 100);
+    setStatus('ai-status', `✅ Résumé généré — texte réduit de ${ratio} %.`, 'success');
   } catch (err) {
     setStatus('ai-status', `❌ ${err.message}`, 'error');
   } finally {
-    btnSel.disabled = false;
+    btnSel.disabled  = false;
     btnPage.disabled = false;
   }
 }
@@ -156,7 +178,7 @@ document.getElementById('btn-copy-summary').addEventListener('click', function (
   copyText(document.getElementById('ai-result').value, this);
 });
 
-// Récupère la sélection en attente (clic-droit) ou la sélection active sur la page
+// Informe l'utilisateur si du texte est déjà sélectionné
 function loadPendingOrActive() {
   const session = chrome.storage.session;
   if (session) {
@@ -166,31 +188,32 @@ function loadPendingOrActive() {
         setStatus('ai-status', `📋 Texte depuis clic-droit (${r.pendingSelection.length} car.). Cliquez pour résumer.`, 'info');
         return;
       }
-      getSelectedText().then(text => {
-        if (text && text.trim().length >= 30)
-          setStatus('ai-status', `📋 Texte sélectionné détecté (${text.length} car.). Cliquez pour résumer.`, 'info');
-      });
+      detectSelection();
     });
   } else {
-    getSelectedText().then(text => {
-      if (text && text.trim().length >= 30)
-        setStatus('ai-status', `📋 Texte sélectionné détecté (${text.length} car.). Cliquez pour résumer.`, 'info');
-    });
+    detectSelection();
   }
 }
+
+function detectSelection() {
+  getSelectedText().then(text => {
+    if (text && text.trim().length >= 100)
+      setStatus('ai-status', `📋 Texte sélectionné (${text.length} car.). Cliquez pour résumer.`, 'info');
+  });
+}
+
 loadPendingOrActive();
 
 // ── Code Tools ─────────────────────────────────────────────────────────────
 
-// JSON
 const jsonInput = document.getElementById('json-input');
 const jsonError = document.getElementById('json-error');
 
 function parseJSON() {
   try {
-    const parsed = JSON.parse(jsonInput.value.trim());
+    const p = JSON.parse(jsonInput.value.trim());
     jsonError.classList.add('hidden');
-    return parsed;
+    return p;
   } catch (e) {
     jsonError.textContent = `JSON invalide : ${e.message}`;
     jsonError.classList.remove('hidden');
@@ -199,13 +222,13 @@ function parseJSON() {
 }
 
 document.getElementById('btn-format-json').addEventListener('click', () => {
-  const parsed = parseJSON();
-  if (parsed !== null) jsonInput.value = JSON.stringify(parsed, null, 2);
+  const p = parseJSON();
+  if (p !== null) jsonInput.value = JSON.stringify(p, null, 2);
 });
 
 document.getElementById('btn-minify-json').addEventListener('click', () => {
-  const parsed = parseJSON();
-  if (parsed !== null) jsonInput.value = JSON.stringify(parsed);
+  const p = parseJSON();
+  if (p !== null) jsonInput.value = JSON.stringify(p);
 });
 
 document.getElementById('btn-copy-json').addEventListener('click', function () {
@@ -220,8 +243,8 @@ document.getElementById('btn-clear-json').addEventListener('click', () => {
 // Base64
 document.getElementById('btn-b64-encode').addEventListener('click', () => {
   try {
-    const raw = document.getElementById('b64-input').value;
-    document.getElementById('b64-output').value = btoa(unescape(encodeURIComponent(raw)));
+    document.getElementById('b64-output').value =
+      btoa(unescape(encodeURIComponent(document.getElementById('b64-input').value)));
   } catch {
     document.getElementById('b64-output').value = '❌ Encodage impossible';
   }
@@ -229,8 +252,8 @@ document.getElementById('btn-b64-encode').addEventListener('click', () => {
 
 document.getElementById('btn-b64-decode').addEventListener('click', () => {
   try {
-    const raw = document.getElementById('b64-input').value.trim();
-    document.getElementById('b64-output').value = decodeURIComponent(escape(atob(raw)));
+    document.getElementById('b64-output').value =
+      decodeURIComponent(escape(atob(document.getElementById('b64-input').value.trim())));
   } catch {
     document.getElementById('b64-output').value = '❌ Base64 invalide';
   }
@@ -275,52 +298,50 @@ async function searchGame() {
   setStatus('game-status', '🔍 Recherche en cours…', 'info');
 
   try {
-    const url =
-      `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(query)}&l=french&cc=FR`;
-    const res = await fetch(url);
+    const res = await fetch(
+      `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(query)}&l=french&cc=FR`
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
     const items = data.items || [];
-    if (items.length === 0) {
-      setStatus('game-status', '❌ Aucun jeu trouvé sur Steam.', 'error');
+
+    if (!items.length) {
+      setStatus('game-status', '❌ Aucun jeu trouvé.', 'error');
       return;
     }
 
     hideStatus('game-status');
 
     items.slice(0, 12).forEach(game => {
-      const item = document.createElement('div');
-      item.className = 'game-item';
-      item.title = `Cliquer pour copier l'App ID : ${game.id}`;
-
+      const el = document.createElement('div');
+      el.className = 'game-item';
       const typeLabel = game.type === 'game' ? 'Jeu'
         : game.type === 'dlc' ? 'DLC'
         : game.type || '';
 
-      item.innerHTML = `
-        <span class="game-name">${escapeHtml(game.name)}</span>
-        ${typeLabel ? `<span class="game-type">${escapeHtml(typeLabel)}</span>` : ''}
+      el.innerHTML = `
+        <span class="game-name">${esc(game.name)}</span>
+        ${typeLabel ? `<span class="game-type">${esc(typeLabel)}</span>` : ''}
         <span class="game-id">${game.id}</span>
         <span class="copied-badge">✓</span>
       `;
 
-      item.addEventListener('click', () => {
+      el.addEventListener('click', () => {
         navigator.clipboard.writeText(String(game.id));
-        const badge = item.querySelector('.copied-badge');
+        const badge = el.querySelector('.copied-badge');
         badge.classList.add('visible');
         setTimeout(() => badge.classList.remove('visible'), 1500);
       });
 
-      resultsEl.appendChild(item);
+      resultsEl.appendChild(el);
     });
   } catch (err) {
-    setStatus('game-status', `❌ Erreur : ${err.message}`, 'error');
+    setStatus('game-status', `❌ ${err.message}`, 'error');
   }
 }
 
-function escapeHtml(str) {
-  return str
+function esc(s) {
+  return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
