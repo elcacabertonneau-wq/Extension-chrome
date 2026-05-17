@@ -11,6 +11,9 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'devtoolkit-summarize' && info.selectionText) {
     chrome.storage.session.set({ pendingSelection: info.selectionText });
-    chrome.action.openPopup().catch(() => {});
+    // openPopup() non disponible sur tous les navigateurs Chromium (Opera GX, Edge, Brave…)
+    if (typeof chrome.action.openPopup === 'function') {
+      chrome.action.openPopup().catch(() => {});
+    }
   }
 });

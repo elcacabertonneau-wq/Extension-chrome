@@ -156,12 +156,29 @@ document.getElementById('btn-copy-summary').addEventListener('click', function (
   copyText(document.getElementById('ai-result').value, this);
 });
 
-// Pre-detect selection to inform user
-getSelectedText().then(text => {
-  if (text && text.trim().length >= 30) {
-    setStatus('ai-status', `📋 Texte sélectionné détecté (${text.length} car.). Cliquez pour résumer.`, 'info');
+// Récupère la sélection en attente (clic-droit) ou la sélection active sur la page
+function loadPendingOrActive() {
+  const session = chrome.storage.session;
+  if (session) {
+    session.get(['pendingSelection'], r => {
+      if (r.pendingSelection) {
+        session.remove('pendingSelection');
+        setStatus('ai-status', `📋 Texte depuis clic-droit (${r.pendingSelection.length} car.). Cliquez pour résumer.`, 'info');
+        return;
+      }
+      getSelectedText().then(text => {
+        if (text && text.trim().length >= 30)
+          setStatus('ai-status', `📋 Texte sélectionné détecté (${text.length} car.). Cliquez pour résumer.`, 'info');
+      });
+    });
+  } else {
+    getSelectedText().then(text => {
+      if (text && text.trim().length >= 30)
+        setStatus('ai-status', `📋 Texte sélectionné détecté (${text.length} car.). Cliquez pour résumer.`, 'info');
+    });
   }
-});
+}
+loadPendingOrActive();
 
 // ── Code Tools ─────────────────────────────────────────────────────────────
 
