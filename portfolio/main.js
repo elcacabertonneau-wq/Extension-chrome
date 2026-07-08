@@ -205,7 +205,57 @@ if (!prefersReducedMotion) {
 }
 
 /* ------------------------------------------------------------
-   5. Marquees (défilement infini, directions alternées)
+   5a. Index des instruments : liste filtrable
+   Design généré via le MCP Magic (21st AI) et adapté en vanilla.
+   ------------------------------------------------------------ */
+// ⚠️ Remplace par tes vraies compétences (cat: lang | front | creatif | outils)
+const SKILLS = [
+  { cat: "lang",    name: "JavaScript / TS",   desc: "Systèmes typés, tooling moderne",        years: "6a", lvl: 94 },
+  { cat: "lang",    name: "HTML / CSS",        desc: "Sémantique, layouts hors grille",         years: "8a", lvl: 96 },
+  { cat: "front",   name: "React",             desc: "Architecture composants",                 years: "5a", lvl: 88 },
+  { cat: "front",   name: "Node.js / Vite",    desc: "APIs, SSR, outillage",                    years: "5a", lvl: 85 },
+  { cat: "creatif", name: "Three.js",          desc: "3D temps réel dans le navigateur",        years: "4a", lvl: 86 },
+  { cat: "creatif", name: "WebGL / GLSL",      desc: "Shaders, post-processing",                years: "3a", lvl: 78 },
+  { cat: "creatif", name: "GSAP",              desc: "Chorégraphies scroll, micro-interactions", years: "5a", lvl: 90 },
+  { cat: "outils",  name: "Extensions Chrome", desc: "Manifest V3, APIs navigateur",            years: "3a", lvl: 82 },
+  { cat: "outils",  name: "Accessibilité",     desc: "WCAG, clavier, lecteurs d'écran",         years: "6a", lvl: 87 },
+  { cat: "outils",  name: "Performance",       desc: "Budgets, profiling, 60fps",               years: "6a", lvl: 91 },
+];
+
+const skillList = document.getElementById("skillList");
+if (skillList) {
+  const tabs = document.querySelectorAll(".skills-tab");
+
+  function renderSkills(cat) {
+    const filtered = cat === "all" ? SKILLS : SKILLS.filter((s) => s.cat === cat);
+    skillList.innerHTML = "";
+    filtered.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.className = "skill-row";
+      li.style.animationDelay = `${i * 45}ms`;
+      li.innerHTML = `
+        <span class="skill-row__num">${String(i + 1).padStart(2, "0")}</span>
+        <span class="skill-row__name">${s.name}</span>
+        <span class="skill-row__meta">${s.desc}</span>
+        <span class="skill-row__bar skill-row__meta"><b><i style="width:${s.lvl}%"></i></b><span>${s.lvl}</span></span>
+        <span class="skill-row__arrow skill-row__meta">${s.years} ↗</span>`;
+      skillList.appendChild(li);
+    });
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => (t.dataset.active = "false"));
+      tab.dataset.active = "true";
+      renderSkills(tab.dataset.cat);
+    });
+  });
+
+  renderSkills("all");
+}
+
+/* ------------------------------------------------------------
+   5b. Marquees (défilement infini, directions alternées)
    ------------------------------------------------------------ */
 if (!prefersReducedMotion) {
   document.querySelectorAll(".marquee").forEach((m) => {

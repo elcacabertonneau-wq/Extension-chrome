@@ -141,28 +141,30 @@
         </div>
       </div>
 
-      <!-- 4 axes forts -->
-      <div class="skills__grid" data-reveal-stagger>
-        <article class="skill-card">
-          <span class="skill-card__num mono">A</span>
-          <h3>Front-end créatif</h3>
-          <p>Interfaces sur mesure, typographie expressive, layouts qui sortent de la grille.</p>
-        </article>
-        <article class="skill-card">
-          <span class="skill-card__num mono">B</span>
-          <h3>3D temps réel</h3>
-          <p>Three.js, shaders GLSL, particules — de la profondeur, pas de la décoration.</p>
-        </article>
-        <article class="skill-card">
-          <span class="skill-card__num mono">C</span>
-          <h3>Performance</h3>
-          <p>Budget poids strict, lazy loading, 60fps mesurés. La vitesse est une feature.</p>
-        </article>
-        <article class="skill-card">
-          <span class="skill-card__num mono">D</span>
-          <h3>Motion &amp; micro-interactions</h3>
-          <p>GSAP, scroll choreography, feedback au curseur. Chaque geste répond.</p>
-        </article>
+      <!-- « Index des instruments » : liste filtrable avec hover flood —
+           design généré via le MCP Magic (21st AI, take 1) et adapté en vanilla -->
+      <div class="skills-index" data-reveal>
+        <div class="skills-index__filters mono">
+          <span class="skills-index__label">filtre /</span>
+          <button class="skills-tab" data-cat="all" data-active="true">Tous</button>
+          <button class="skills-tab" data-cat="lang">Langages</button>
+          <button class="skills-tab" data-cat="front">Front</button>
+          <button class="skills-tab" data-cat="creatif">Créatif</button>
+          <button class="skills-tab" data-cat="outils">Outils</button>
+        </div>
+        <ul class="skills-index__list" id="skillList"></ul>
+
+        <div class="skills-index__meta">
+          <div class="skills-index__stat">
+            <span class="skills-index__stat-label mono">années de code</span>
+            <span class="skills-index__stat-value">8<em>+</em></span>
+          </div>
+          <div class="skills-index__stat">
+            <span class="skills-index__stat-label mono">projets livrés</span>
+            <span class="skills-index__stat-value">40<em>.</em></span>
+          </div>
+          <p class="skills-index__note">La stack est un moyen, pas un manifeste. Je choisis ce qui fait <span>livrer plus vite et lire plus clair</span> — le reste, c'est de la mode.</p>
+        </div>
       </div>
     </section>
 

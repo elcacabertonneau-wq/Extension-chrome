@@ -327,27 +327,97 @@ img, canvas { max-width: 100%; display: block; }
 .marquee--accent .marquee__track span { color: var(--acid); opacity: 0.85; }
 .marquee--accent:hover .marquee__track span { opacity: 1; color: var(--acid); }
 
-.skills__grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
-  background: var(--line); border: 1px solid var(--line);
+/* « Index des instruments » — design 21st AI (take 1) adapté */
+.skills-index__filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
 }
-.skill-card {
-  background: var(--bg); padding: 2rem 1.6rem 2.4rem;
-  position: relative; overflow: hidden;
-  transition: background 0.4s;
+.skills-index__label {
+  font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--muted); margin-right: 0.8rem;
 }
-.skill-card::after {
-  /* liseré acide qui monte au hover */
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+.skills-tab {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  transition: all 0.2s;
+}
+.skills-tab:hover { border-color: var(--ink); color: var(--ink); }
+.skills-tab[data-active="true"] {
+  background: var(--acid); border-color: var(--acid); color: var(--bg);
+}
+
+.skills-index__list { border-bottom: 1px solid var(--line); }
+.skill-row {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1.4fr) 1fr minmax(110px, 0.6fr) auto;
+  align-items: center; gap: clamp(0.8rem, 2.5vw, 2rem);
+  padding: 1.5rem 0.8rem;
+  border-top: 1px solid var(--line);
+  transition: color 0.25s;
+  /* apparition en cascade au filtrage */
+  opacity: 0; transform: translateY(8px);
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+/* le flood : le lime inonde la ligne par le bas, le texte s'inverse */
+.skill-row::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
   background: var(--acid);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 0.45s var(--ease-out);
+  transform: translateY(101%);
+  transition: transform 0.45s cubic-bezier(0.7, 0, 0.2, 1);
 }
-.skill-card:hover { background: var(--bg-2); }
-.skill-card:hover::after { transform: scaleX(1); }
-.skill-card__num { color: var(--acid); font-size: 0.8rem; }
-.skill-card h3 { margin: 1.4rem 0 0.7rem; font-size: 1.15rem; font-weight: 700; }
-.skill-card p { color: var(--muted); font-size: 0.92rem; }
+.skill-row:hover::before { transform: translateY(0); }
+.skill-row:hover { color: var(--bg); }
+.skill-row:hover .skill-row__meta { color: var(--bg); }
+.skill-row:hover .skill-row__bar i { background: var(--bg); }
+.skill-row:hover .skill-row__arrow { transform: translate(4px, -4px); }
+
+.skill-row__num { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.skill-row:hover .skill-row__num { color: var(--bg); }
+.skill-row__name {
+  font-size: clamp(1.5rem, 3.6vw, 2.6rem);
+  font-weight: 500; letter-spacing: -0.01em; line-height: 1;
+}
+.skill-row__meta { color: var(--muted); font-size: 0.9rem; transition: color 0.25s; }
+.skill-row__bar { display: flex; align-items: center; gap: 0.6rem; }
+.skill-row__bar b {
+  flex: 1; height: 1px; background: var(--line);
+  position: relative; overflow: hidden;
+}
+.skill-row__bar i {
+  position: absolute; left: 0; top: 0; height: 1px;
+  background: var(--acid); display: block;
+  transition: background 0.25s;
+}
+.skill-row__bar span { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; }
+.skill-row__arrow {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  transition: transform 0.35s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.skills-index__meta {
+  display: grid; grid-template-columns: auto auto 1fr;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-items: end;
+  margin-top: 3rem;
+}
+.skills-index__stat { display: grid; gap: 0.5rem; }
+.skills-index__stat-label {
+  font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--muted);
+}
+.skills-index__stat-value { font-size: clamp(2.4rem, 5vw, 3.4rem); font-weight: 400; line-height: 1; }
+.skills-index__stat-value em { font-style: normal; color: var(--acid); }
+.skills-index__note {
+  color: var(--muted); font-size: 0.9rem; max-width: 42ch;
+  justify-self: end; text-align: right;
+}
+.skills-index__note span { color: var(--ink); }
 
 /* ---------- PROJETS : showcase liste + aperçu flottant ----------
    Pattern « Project Showcase » (21st.dev id 9607) adapté en vanilla */
@@ -489,7 +559,11 @@ img, canvas { max-width: 100%; display: block; }
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .about__grid { grid-template-columns: 1fr; }
-  .skills__grid { grid-template-columns: repeat(2, 1fr); }
+  /* index des instruments compact */
+  .skill-row { grid-template-columns: 3ch 1fr auto; }
+  .skill-row__meta, .skill-row__bar { display: none; }
+  .skills-index__meta { grid-template-columns: 1fr 1fr; }
+  .skills-index__note { grid-column: 1 / -1; justify-self: start; text-align: left; }
   /* showcase compact : l'aperçu curseur n'a pas de sens au tactile */
   .showcase__preview { display: none; }
   .showcase__row { grid-template-columns: auto 1fr auto; }
@@ -497,8 +571,6 @@ img, canvas { max-width: 100%; display: block; }
 }
 
 @media (max-width: 640px) {
-  .skills__grid { grid-template-columns: 1fr; }
-
   /* le rail devient un dock bas compact */
   .rail {
     top: auto; bottom: 1rem; right: 50%;
@@ -521,5 +593,8 @@ img, canvas { max-width: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .grain, .hero__hint-line::after, .dot { animation: none; }
-  *, *::before, *::after { transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

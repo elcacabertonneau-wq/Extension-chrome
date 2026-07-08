@@ -16,9 +16,11 @@ Les points à éditer sont marqués `⚠️` dans `index.html` :
 
 - **Nom** : `.hero__title` (les deux lignes `BERTON` / `NEAU/`) + `<title>`.
 - **Email** : les deux liens `mailto:` de la section contact.
-- **Projets** : les 4 `.project-card` (titre, description, tags, lien).
-  Les visuels sont des dégradés CSS (`.project-card__visual--0X`) —
+- **Projets** : les 4 `.showcase__row` (titre, description, tags, année, lien).
+  Les visuels de l'aperçu flottant sont des dégradés CSS (`.project-visual--0X`) —
   remplaçables par des captures d'écran.
+- **Compétences** : le tableau `SKILLS` en tête de la section 5a de `main.js`
+  (nom, catégorie, description, années, niveau).
 - **Réseaux** : `.contact__socials`.
 - **Couleurs** : variables CSS en tête de `style.css` (`--acid`, `--violet`…).
 
