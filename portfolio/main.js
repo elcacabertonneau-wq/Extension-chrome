@@ -196,7 +196,7 @@ if (!prefersReducedMotion) {
   });
 
   // scramble des titres de projets quand ils apparaissent
-  gsap.utils.toArray(".project-card__title").forEach((title) => {
+  gsap.utils.toArray(".showcase__title").forEach((title) => {
     ScrollTrigger.create({
       trigger: title, start: "top 85%", once: true,
       onEnter: () => scramble(title, 0.8),
@@ -219,27 +219,49 @@ if (!prefersReducedMotion) {
 }
 
 /* ------------------------------------------------------------
-   6. Project cards : tilt 3D + halo suiveur
+   6. Projets : aperçu flottant qui suit le curseur (lerp)
+   Pattern « Project Showcase » récupéré via le MCP Magic
+   (21st.dev, composant id 9607), réécrit en vanilla.
    ------------------------------------------------------------ */
-if (isFinePointer && !prefersReducedMotion) {
-  document.querySelectorAll("[data-tilt]").forEach((card) => {
-    card.addEventListener("mousemove", (e) => {
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width;
-      const py = (e.clientY - r.top) / r.height;
-      // halo radial
-      card.style.setProperty("--mx", `${px * 100}%`);
-      card.style.setProperty("--my", `${py * 100}%`);
-      // tilt subtil
-      gsap.to(card, {
-        rotateY: (px - 0.5) * 7,
-        rotateX: (0.5 - py) * 7,
-        transformPerspective: 900,
-        duration: 0.5, ease: "power2.out",
-      });
+const showcase = document.getElementById("showcase");
+if (showcase && isFinePointer && !prefersReducedMotion) {
+  const preview = document.querySelector(".showcase__preview");
+  const visuals = preview.querySelectorAll(".showcase__img");
+  const rows = showcase.querySelectorAll(".showcase__row");
+
+  let mx = 0, my = 0;        // position réelle de la souris
+  let px = 0, py = 0;        // position lissée (lerp)
+  let hovering = false;
+  let rafId = null;
+
+  function loop() {
+    px += (mx - px) * 0.15;
+    py += (my - py) * 0.15;
+    // légère inclinaison selon la vitesse horizontale → sensation d'inertie
+    const skew = Math.max(-6, Math.min(6, (mx - px) * 0.08));
+    preview.style.transform =
+      `translate3d(${px + 24}px, ${py - 100}px, 0) rotate(${skew}deg)`;
+    rafId = requestAnimationFrame(loop);
+  }
+
+  showcase.addEventListener("mousemove", (e) => { mx = e.clientX; my = e.clientY; });
+
+  rows.forEach((row, i) => {
+    row.addEventListener("mouseenter", () => {
+      hovering = true;
+      preview.classList.add("is-visible");
+      visuals.forEach((v, j) => v.classList.toggle("is-active", i === j));
+      if (rafId === null) { px = mx; py = my; loop(); }
     });
-    card.addEventListener("mouseleave", () => {
-      gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.7, ease: "elastic.out(1, 0.5)" });
+    row.addEventListener("mouseleave", () => {
+      hovering = false;
+      // petite latence : évite le clignotement entre deux lignes
+      setTimeout(() => {
+        if (!hovering) {
+          preview.classList.remove("is-visible");
+          if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+        }
+      }, 80);
     });
   });
 }

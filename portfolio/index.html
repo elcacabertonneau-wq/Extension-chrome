@@ -173,54 +173,61 @@
         <div class="scanline" aria-hidden="true"></div>
       </header>
 
-      <div class="projects__grid" data-reveal-stagger>
+      <!-- Liste + aperçu flottant qui suit le curseur —
+           pattern « Project Showcase » récupéré via le MCP Magic (21st.dev, id 9607),
+           réécrit en vanilla et adapté à la direction artistique -->
+      <!-- hors du conteneur animé : position:fixed exige un référentiel viewport -->
+      <div class="showcase__preview" aria-hidden="true">
+        <div class="showcase__img project-visual--01"><span class="mono">01</span></div>
+        <div class="showcase__img project-visual--02"><span class="mono">02</span></div>
+        <div class="showcase__img project-visual--03"><span class="mono">03</span></div>
+        <div class="showcase__img project-visual--04"><span class="mono">04</span></div>
+      </div>
+
+      <div class="showcase" id="showcase" data-reveal-stagger>
         <!-- ⚠️ Remplace les projets placeholder par les tiens -->
-        <a href="#contact" class="project-card" data-tilt>
-          <div class="project-card__visual project-card__visual--01">
-            <span class="project-card__index mono">01</span>
+        <a href="#contact" class="showcase__row">
+          <span class="showcase__num mono">01</span>
+          <div class="showcase__main">
+            <h3 class="showcase__title" data-scramble>Nébula</h3>
+            <p class="showcase__desc">Dashboard analytics temps réel — flux WebSocket, visualisations D3.</p>
           </div>
-          <div class="project-card__body">
-            <h3 class="project-card__title" data-scramble>Nébula</h3>
-            <p class="project-card__desc">Dashboard analytics temps réel — flux WebSocket, visualisations D3.</p>
-            <ul class="project-card__tags mono"><li>Node.js</li><li>D3</li><li>WebSocket</li></ul>
-          </div>
-          <span class="project-card__go" aria-hidden="true">→</span>
+          <ul class="showcase__tags mono"><li>Node.js</li><li>D3</li><li>WebSocket</li></ul>
+          <span class="showcase__year mono">2026</span>
+          <span class="showcase__arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a href="#contact" class="project-card" data-tilt>
-          <div class="project-card__visual project-card__visual--02">
-            <span class="project-card__index mono">02</span>
+        <a href="#contact" class="showcase__row">
+          <span class="showcase__num mono">02</span>
+          <div class="showcase__main">
+            <h3 class="showcase__title" data-scramble>Forge</h3>
+            <p class="showcase__desc">E-commerce headless — panier optimiste, paiement Stripe, PWA offline.</p>
           </div>
-          <div class="project-card__body">
-            <h3 class="project-card__title" data-scramble>Forge</h3>
-            <p class="project-card__desc">E-commerce headless — panier optimiste, paiement Stripe, PWA offline.</p>
-            <ul class="project-card__tags mono"><li>React</li><li>Stripe</li><li>PWA</li></ul>
-          </div>
-          <span class="project-card__go" aria-hidden="true">→</span>
+          <ul class="showcase__tags mono"><li>React</li><li>Stripe</li><li>PWA</li></ul>
+          <span class="showcase__year mono">2025</span>
+          <span class="showcase__arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a href="#contact" class="project-card" data-tilt>
-          <div class="project-card__visual project-card__visual--03">
-            <span class="project-card__index mono">03</span>
+        <a href="#contact" class="showcase__row">
+          <span class="showcase__num mono">03</span>
+          <div class="showcase__main">
+            <h3 class="showcase__title" data-scramble>Echo</h3>
+            <p class="showcase__desc">Extension Chrome de productivité — Manifest V3, sync multi-appareils.</p>
           </div>
-          <div class="project-card__body">
-            <h3 class="project-card__title" data-scramble>Echo</h3>
-            <p class="project-card__desc">Extension Chrome de productivité — Manifest V3, sync multi-appareils.</p>
-            <ul class="project-card__tags mono"><li>Chrome API</li><li>MV3</li><li>IndexedDB</li></ul>
-          </div>
-          <span class="project-card__go" aria-hidden="true">→</span>
+          <ul class="showcase__tags mono"><li>Chrome API</li><li>MV3</li><li>IndexedDB</li></ul>
+          <span class="showcase__year mono">2025</span>
+          <span class="showcase__arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a href="#contact" class="project-card" data-tilt>
-          <div class="project-card__visual project-card__visual--04">
-            <span class="project-card__index mono">04</span>
+        <a href="#contact" class="showcase__row">
+          <span class="showcase__num mono">04</span>
+          <div class="showcase__main">
+            <h3 class="showcase__title" data-scramble>Atlas</h3>
+            <p class="showcase__desc">Cartographie 3D interactive — 50k points en WebGL, fluide sur mobile.</p>
           </div>
-          <div class="project-card__body">
-            <h3 class="project-card__title" data-scramble>Atlas</h3>
-            <p class="project-card__desc">Cartographie 3D interactive — 50k points en WebGL, fluide sur mobile.</p>
-            <ul class="project-card__tags mono"><li>Three.js</li><li>GLSL</li><li>WebGL</li></ul>
-          </div>
-          <span class="project-card__go" aria-hidden="true">→</span>
+          <ul class="showcase__tags mono"><li>Three.js</li><li>GLSL</li><li>WebGL</li></ul>
+          <span class="showcase__year mono">2024</span>
+          <span class="showcase__arrow" aria-hidden="true">↗</span>
         </a>
       </div>
     </section>
