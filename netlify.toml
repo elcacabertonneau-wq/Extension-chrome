@@ -1,0 +1,3 @@
+# Déploiement Netlify : publie le dossier portfolio tel quel (aucun build)
+[build]
+  publish = "portfolio"

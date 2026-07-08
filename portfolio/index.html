@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BERTONNEAU — Développeur web créatif</title>
+  <meta name="description" content="Portfolio de Bertonneau, développeur web créatif — interfaces, 3D temps réel et animation." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0c'/%3E%3Ctext x='6' y='23' font-family='monospace' font-size='18' fill='%23C6F32D'%3EB/%3C/text%3E%3C/svg%3E" />
+
+  <!-- Typographies auto-hébergées (aucune dépendance externe) -->
+  <link rel="preload" href="fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="fonts/fonts.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Grain global (effet signature secondaire) -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- Curseur custom (desktop uniquement) -->
+  <div class="cursor" aria-hidden="true">
+    <div class="cursor__dot"></div>
+    <div class="cursor__ring"></div>
+  </div>
+
+  <!-- ===== Header minimal : marque + bouton sommaire ===== -->
+  <header class="topbar">
+    <a href="#hero" class="brand" data-scramble>BERTONNEAU/</a>
+    <button class="menu-btn" id="menuBtn" aria-label="Ouvrir le sommaire" aria-expanded="false">
+      <span class="menu-btn__label" data-scramble>INDEX</span>
+      <span class="menu-btn__lines"><i></i><i></i></span>
+    </button>
+  </header>
+
+  <!-- ===== Rail de navigation vertical (parti pris : pas de navbar) ===== -->
+  <nav class="rail" aria-label="Navigation des sections">
+    <div class="rail__indicator" aria-hidden="true"></div>
+    <a href="#hero"     class="rail__item is-active"><span class="rail__num">01</span><span class="rail__label">Accueil</span></a>
+    <a href="#apropos"  class="rail__item"><span class="rail__num">02</span><span class="rail__label">À propos</span></a>
+    <a href="#skills"   class="rail__item"><span class="rail__num">03</span><span class="rail__label">Stack</span></a>
+    <a href="#projets"  class="rail__item"><span class="rail__num">04</span><span class="rail__label">Projets</span></a>
+    <a href="#contact"  class="rail__item"><span class="rail__num">05</span><span class="rail__label">Contact</span></a>
+  </nav>
+
+  <!-- ===== Sommaire plein écran ===== -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <nav class="overlay__nav" aria-label="Sommaire">
+      <a href="#hero"    class="overlay__item"><span class="overlay__num">01</span><span class="overlay__word" data-scramble>Accueil</span></a>
+      <a href="#apropos" class="overlay__item"><span class="overlay__num">02</span><span class="overlay__word" data-scramble>À propos</span></a>
+      <a href="#skills"  class="overlay__item"><span class="overlay__num">03</span><span class="overlay__word" data-scramble>Stack</span></a>
+      <a href="#projets" class="overlay__item"><span class="overlay__num">04</span><span class="overlay__word" data-scramble>Projets</span></a>
+      <a href="#contact" class="overlay__item"><span class="overlay__num">05</span><span class="overlay__word" data-scramble>Contact</span></a>
+    </nav>
+    <p class="overlay__foot">// signal_établi — bertonneau © 2026</p>
+  </div>
+
+  <main>
+
+    <!-- ===== 01 / HERO ===== -->
+    <section class="hero" id="hero" data-section="01">
+      <canvas class="hero__canvas" id="scene" aria-hidden="true"></canvas>
+
+      <div class="hero__content">
+        <p class="hero__eyebrow mono">// développeur web créatif</p>
+        <!-- ⚠️ Remplace par ton prénom/nom ici -->
+        <h1 class="hero__title">
+          <span class="hero__line"><span>BERTON</span></span>
+          <span class="hero__line hero__line--accent"><span>NEAU<em class="hero__slash">/</em></span></span>
+        </h1>
+        <p class="hero__tagline">Je construis des interfaces qui laissent une trace —<br />du pixel au shader.</p>
+
+        <div class="hero__cta">
+          <a href="#projets" class="btn btn--solid" data-magnetic>
+            <span class="btn__label" data-scramble>Voir mes projets</span>
+            <span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
+          <a href="#contact" class="btn btn--ghost" data-magnetic>
+            <span class="btn__label" data-scramble>Me contacter</span>
+            <span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__hint mono" aria-hidden="true">
+        <span>scroll</span>
+        <span class="hero__hint-line"></span>
+      </div>
+    </section>
+
+    <!-- ===== 02 / À PROPOS ===== -->
+    <section class="section about" id="apropos" data-section="02">
+      <header class="section__head" data-reveal>
+        <p class="section__eyebrow mono">// 02 — à propos</p>
+        <div class="scanline" aria-hidden="true"></div>
+      </header>
+      <div class="about__grid">
+        <h2 class="about__statement" data-reveal-lines>
+          Le web est mon terrain de jeu.
+          Je conçois des expériences <em>rapides</em>, <em>accessibles</em>
+          et un peu <em>insolentes</em> — là où le design rencontre le code.
+        </h2>
+        <div class="about__meta" data-reveal>
+          <p>Basé en France, je transforme des idées en produits web soignés : sites, applications, extensions, expérimentations WebGL. Obsédé par le détail, la performance et la sensation au bout du curseur.</p>
+          <ul class="about__facts mono">
+            <li><span>focus</span>front-end créatif · 3D temps réel</li>
+            <li><span>credo</span>60fps ou rien</li>
+            <li><span>statut</span><i class="dot"></i>disponible pour missions</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 03 / STACK ===== -->
+    <section class="section skills" id="skills" data-section="03">
+      <header class="section__head" data-reveal>
+        <p class="section__eyebrow mono">// 03 — stack &amp; compétences</p>
+        <div class="scanline" aria-hidden="true"></div>
+      </header>
+
+      <!-- Marquee 3 rangées, directions alternées -->
+      <div class="marquee-stack" data-reveal>
+        <div class="marquee" data-dir="left">
+          <div class="marquee__track">
+            <span>JavaScript</span><span>TypeScript</span><span>Three.js</span><span>WebGL / GLSL</span><span>GSAP</span><span>Canvas</span>
+            <span>JavaScript</span><span>TypeScript</span><span>Three.js</span><span>WebGL / GLSL</span><span>GSAP</span><span>Canvas</span>
+          </div>
+        </div>
+        <div class="marquee marquee--accent" data-dir="right">
+          <div class="marquee__track">
+            <span>React</span><span>Vite</span><span>Node.js</span><span>REST &amp; GraphQL</span><span>Extensions Chrome</span><span>PWA</span>
+            <span>React</span><span>Vite</span><span>Node.js</span><span>REST &amp; GraphQL</span><span>Extensions Chrome</span><span>PWA</span>
+          </div>
+        </div>
+        <div class="marquee" data-dir="left">
+          <div class="marquee__track">
+            <span>CSS moderne</span><span>Accessibilité</span><span>Performance</span><span>Design system</span><span>Motion design</span><span>Git</span>
+            <span>CSS moderne</span><span>Accessibilité</span><span>Performance</span><span>Design system</span><span>Motion design</span><span>Git</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 axes forts -->
+      <div class="skills__grid" data-reveal-stagger>
+        <article class="skill-card">
+          <span class="skill-card__num mono">A</span>
+          <h3>Front-end créatif</h3>
+          <p>Interfaces sur mesure, typographie expressive, layouts qui sortent de la grille.</p>
+        </article>
+        <article class="skill-card">
+          <span class="skill-card__num mono">B</span>
+          <h3>3D temps réel</h3>
+          <p>Three.js, shaders GLSL, particules — de la profondeur, pas de la décoration.</p>
+        </article>
+        <article class="skill-card">
+          <span class="skill-card__num mono">C</span>
+          <h3>Performance</h3>
+          <p>Budget poids strict, lazy loading, 60fps mesurés. La vitesse est une feature.</p>
+        </article>
+        <article class="skill-card">
+          <span class="skill-card__num mono">D</span>
+          <h3>Motion &amp; micro-interactions</h3>
+          <p>GSAP, scroll choreography, feedback au curseur. Chaque geste répond.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===== 04 / PROJETS ===== -->
+    <section class="section projects" id="projets" data-section="04">
+      <header class="section__head" data-reveal>
+        <p class="section__eyebrow mono">// 04 — projets sélectionnés</p>
+        <div class="scanline" aria-hidden="true"></div>
+      </header>
+
+      <div class="projects__grid" data-reveal-stagger>
+        <!-- ⚠️ Remplace les projets placeholder par les tiens -->
+        <a href="#contact" class="project-card" data-tilt>
+          <div class="project-card__visual project-card__visual--01">
+            <span class="project-card__index mono">01</span>
+          </div>
+          <div class="project-card__body">
+            <h3 class="project-card__title" data-scramble>Nébula</h3>
+            <p class="project-card__desc">Dashboard analytics temps réel — flux WebSocket, visualisations D3.</p>
+            <ul class="project-card__tags mono"><li>Node.js</li><li>D3</li><li>WebSocket</li></ul>
+          </div>
+          <span class="project-card__go" aria-hidden="true">→</span>
+        </a>
+
+        <a href="#contact" class="project-card" data-tilt>
+          <div class="project-card__visual project-card__visual--02">
+            <span class="project-card__index mono">02</span>
+          </div>
+          <div class="project-card__body">
+            <h3 class="project-card__title" data-scramble>Forge</h3>
+            <p class="project-card__desc">E-commerce headless — panier optimiste, paiement Stripe, PWA offline.</p>
+            <ul class="project-card__tags mono"><li>React</li><li>Stripe</li><li>PWA</li></ul>
+          </div>
+          <span class="project-card__go" aria-hidden="true">→</span>
+        </a>
+
+        <a href="#contact" class="project-card" data-tilt>
+          <div class="project-card__visual project-card__visual--03">
+            <span class="project-card__index mono">03</span>
+          </div>
+          <div class="project-card__body">
+            <h3 class="project-card__title" data-scramble>Echo</h3>
+            <p class="project-card__desc">Extension Chrome de productivité — Manifest V3, sync multi-appareils.</p>
+            <ul class="project-card__tags mono"><li>Chrome API</li><li>MV3</li><li>IndexedDB</li></ul>
+          </div>
+          <span class="project-card__go" aria-hidden="true">→</span>
+        </a>
+
+        <a href="#contact" class="project-card" data-tilt>
+          <div class="project-card__visual project-card__visual--04">
+            <span class="project-card__index mono">04</span>
+          </div>
+          <div class="project-card__body">
+            <h3 class="project-card__title" data-scramble>Atlas</h3>
+            <p class="project-card__desc">Cartographie 3D interactive — 50k points en WebGL, fluide sur mobile.</p>
+            <ul class="project-card__tags mono"><li>Three.js</li><li>GLSL</li><li>WebGL</li></ul>
+          </div>
+          <span class="project-card__go" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== 05 / CONTACT ===== -->
+    <section class="section contact" id="contact" data-section="05">
+      <header class="section__head" data-reveal>
+        <p class="section__eyebrow mono">// 05 — contact</p>
+        <div class="scanline" aria-hidden="true"></div>
+      </header>
+
+      <div class="contact__inner" data-reveal>
+        <h2 class="contact__title">Un projet en tête&nbsp;?<br /><span>Envoyons un signal.</span></h2>
+        <!-- ⚠️ Remplace par ton adresse -->
+        <a href="mailto:elcaca.bertonneau@gmail.com" class="contact__mail" data-scramble>elcaca.bertonneau@gmail.com</a>
+        <div class="contact__cta">
+          <a href="mailto:elcaca.bertonneau@gmail.com" class="btn btn--solid btn--big" data-magnetic>
+            <span class="btn__label" data-scramble>Me contacter</span>
+            <span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+        <ul class="contact__socials mono">
+          <li><a href="https://github.com/" target="_blank" rel="noopener" data-scramble>GitHub ↗</a></li>
+          <li><a href="https://www.linkedin.com/" target="_blank" rel="noopener" data-scramble>LinkedIn ↗</a></li>
+          <li><a href="https://codepen.io/" target="_blank" rel="noopener" data-scramble>CodePen ↗</a></li>
+        </ul>
+      </div>
+
+      <footer class="footer mono">
+        <span>© 2026 Bertonneau — fait main, sans template</span>
+        <span>// fin_de_transmission</span>
+      </footer>
+    </section>
+
+  </main>
+
+  <!-- GSAP (animations & scroll) — vendorisé en local -->
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/ScrollTrigger.min.js"></script>
+  <script src="vendor/ScrollToPlugin.min.js"></script>
+
+  <!-- Three.js via import map (aucun build nécessaire) -->
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
