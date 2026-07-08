@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "magic": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest",
+        "install"
+      ],
+      "env": {
+        "API_KEY": "62fe2701896c915852cdac9b8d5db43ec9cc19dc7046fbc1fa963c98b708d1ae"
+      }
+    }
+  }
+}
