@@ -450,8 +450,17 @@ img, canvas { max-width: 100%; display: block; }
 .contact__mail:hover { color: var(--acid); border-color: var(--acid); }
 .contact__cta { margin-top: 2.8rem; }
 .contact__socials { display: flex; gap: 2rem; margin-top: 4rem; font-size: 0.8rem; }
-.contact__socials a { color: var(--muted); letter-spacing: 0.1em; transition: color 0.3s; }
+.contact__socials a {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  color: var(--muted); letter-spacing: 0.1em;
+  transition: color 0.3s;
+}
 .contact__socials a:hover { color: var(--acid); }
+.social-icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  transition: transform 0.3s var(--ease-out);
+}
+.contact__socials a:hover .social-icon { transform: translateY(-3px) rotate(-8deg); }
 
 .footer {
   display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
